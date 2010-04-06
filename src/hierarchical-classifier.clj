@@ -5,6 +5,8 @@
 ;summation of all inverses of the Euclidian distances
 [["north-america" [:usa :miami]]] 
 
+
+
 (defn member? [x sequ]
   (some #{x} sequ))
 
@@ -36,7 +38,7 @@
     (apply println "args = " args)
     (apply f args)))
 
-(def DOC-COUNT 2)
+(def DOC-COUNT 4)
 (def DOC-OFFSET 24)
 
 (def all-txt-files (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File "/Users/herdrick/Dropbox") 
@@ -87,22 +89,32 @@
 ;scores a single Map of relative frequency distances (each is the frequency distance (between two docs) of a single word). this has an entry for each word in the entire corpus, i.e. it's huge 
 ;this sucks, but kinda works.  good enough.
 ;put this in the scope of score-pair?
+;uh, i think the / part is needless because all our rel-freq-distances have the same lenth (= to the length of the corpus word frequency map) and this is only for comparison.  todo: fix by killing it. 
 (defn score [rel-freq-distances]
-  (/ (reduce + (vals rel-freq-distances)) (count rel-freq-distances)))
+  (/ (reduce + (vals rel-freq-distances)) (count rel-freq-distances))) 
 
-;here is where the huge number of relfreq distances are created (in rel-freq-distances) and reduced to a single number (in score)
-(def score-pair (fn [all-word-relfreqs [[relfreq1 file1] [relfreq2 file2]] ]
-		  ;(print "score-pair")
-		  [(score (rel-freq-distances relfreq1 relfreq2 all-word-relfreqs)) file1 file2]))   
-   
+;here is where the huge number of relfreq distances are created (in rel-freq-distances) and immediately reduced to a single number (in score)
+(def score-pair (fn [all-word-relfreqs [[relfreq1 file-or-cat1] [relfreq2 file-or-cat2]] ] ; todo: make this a defn
+		  (println "score-pair")
+		  (println file-or-cat1)
+		  (println file-or-cat2)
+		  [(score (rel-freq-distances relfreq1 relfreq2 all-word-relfreqs)) file-or-cat1 file-or-cat2]))
+
 (use 'clojure.contrib.combinatorics) ; sadly, combinations don't produce lazy seqs 
 
+ 
 (defn score-combos-n-sort [relfreqs omni-relfreq]
+  ;(println)
+  ;(println (type relfreqs))
+  ;(println "score-combos-n-sort    count relfreqs = " (count relfreqs))
+  ;(println "score-combos-n-sort   first relfreqs = " (first relfreqs)) 
+  ;(println)
   ;(println (first (combinations relfreqs 2)))
-  (sort (fn [[n1 _ _] [n2 _ _]] (< n1 n2)) 
-	(map #(score-pair omni-relfreq %) 
-	     (combinations relfreqs 2))))
-
+ (let [rez (sort (fn [[n1 _ _] [n2 _ _]] (< n1 n2)) 
+		 (map #(score-pair omni-relfreq %) ;todo: pointfree
+		      (combinations relfreqs 2)))]
+   (println "END score-combos-n-sort")
+   rez))
 ;ok, this isn't maybe a good place to divide into a fn, but i had to get moving forward to get my brain going so fuck it.
 ;(defn rescore [newlyweds old-pairs] (let [pairs (filter-intersection (rest newlyweds) old-pairs)]
 ;		   (concat pairs (map #(score-pair % omni-relfreq) pairs))))     ; notice that (map #(score-pair % omni-relfreq) shows up twice in the code, possible fn?
@@ -123,22 +135,83 @@
 ;					      (set sequence)))) sequences))
 
 ;above is the older, shorter version that didn't use the general intersection-fn below. i think don't use this in the blog post cause it violates my principle of: don't make a new abstraction unless you're going to need it more than once.  I only use intersection-fn below once in the code so it's not worth it.  But actually I used it again in debugging so it really did pay off, maybe.  Hmm, maybe I shoulda just copied and pasted and made what i needed for that as a one-off thing.  Yeah, probably.
-;BTW there should be a negation predicate maker for Clojure. is there?
+;BTW there should be a negation predicate maker for Clojure. is there? YES  'complement'
 (defn filter-intersection [sequence sequences]
-  (filter (fn [sequ] (not ((intersection-fn sequence) sequ))) sequences))
+  ;(prn "filter-intersection. sequence = " sequence)
+  (filter (fn [sequ]
+	    ;(prn "sequ = " (rest sequ))
+	    (not ((intersection-fn sequence) sequ))) sequences))
+
+(defn combine-relfreqs [rf1 rf2]
+  (merge-with #(mean [% %2]) rf1 rf2))  ; i'm just combining relfreqs taking their (unweighted) mean.  
+
 
 (def relative-freq (memoize (fn [cat-or-file]
-			      (defn combine-relfreqs [rf1 rf2]
-				(merge-with #(mean [% %2]) rf1 rf2))  ; i'm just combining relfreqs taking their (unweighted) mean.  
-			      (if (coll? cat-or-file)
-				(combine-relfreqs (relative-freq (first cat-or-file)) 
-						  (relative-freq (second cat-or-file)))
-				(seq->relative-freq (file->seq cat-or-file)))))); this is a file instead of a collection of 
+			      (println "relative-freq" (type cat-or-file))
+			      (println)
+			      (if (coll? cat-or-file) 
+				(do 
+				  (println "relative-freq  first" (first cat-or-file))
+				  (println)
+				  (println "relative-freq  second" (second cat-or-file))
+				  (println)))
+			      
+			      (if (and (coll? cat-or-file) (= (count cat-or-file) 2))
+				(do (println "combining...")
+				    (combine-relfreqs (relative-freq (first cat-or-file)) 
+						      (relative-freq (second cat-or-file))))
+				
+				(if (= "class java.io.File" (str (type cat-or-file)))
+				  (do (println "it's a file...")
+				      (seq->relative-freq (file->seq cat-or-file)))
+				  (new java.lang.Error (str "not file nor pair of freqs"))))))); this is a file instead of a collection of 
+
+  
+
+;(time (foo s-s hundred-doc-relfreqs corpus-relfreq))
+;(def s-s-new (sorted-pairs hundred-doc-relfreqs-new corpus-relfreq))
+; this needs to be refactored in terms of 
+;(def s-s (sort (fn [[n1 _ _] [n2 _ _]] (< n1 n2)) 
+;	       (map #(score-pair % corpus-relfreq) 
+;		    (combinations hundred-doc-relfreqs 2))))
+;(def s-s (score-combos-n-sort hundred-doc-relfreqs corpus-relfreq))
+
+(def corpus-relfreq (seq->relative-freq omni-doc)) 
+;make this pointfree
+(def hundred-doc-relfreqs (map #(vector (seq->relative-freq (file->seq %)) %) txt-files))
+
+;this is the recursive thing that... pretty much is the master function. 
+(defn foo-hosed
+  ([availables omni-relfreq] (foo-hosed (score-combos-n-sort (seq (map (fn [available] 
+								   (println "available = " available)
+								   [(relative-freq available) available]) 
+								 availables)) 
+						       omni-relfreq) availables omni-relfreq))       
+  ([s-s relfreqs omni-relfreq] 
+     ;(println "foo. s-s = " s-s)    
+     ;(println)
+     ;(print "count s-s: ")
+     ;(println (count s-s))
+     ;(print "count availables: ")
+     ;(println (count availables))
+     ;(println "first availables")
+     ;(println (first availables))
+     ;(println)
+     ;(println) 
+     (if (< (count s-s) 2) ; can't ever be 2, BTW.  3 choose 2 is 3, 2 choose 2 is 1. 
+       s-s
+       (let [relfreqs-new (conj (filter-intersection (rest (first s-s)) relfreqs) [(relative-freq (rest (first s-s))) (rest (first s-s))])
+	     s-s-new (score-combos-n-sort relfreqs-new omni-relfreq)]
+					;(print "count s-s-new: ") 
+					;(println (count s-s-new))	 
+	 (foo-hosed s-s-new relfreqs-new omni-relfreq)))))
+
 
 ;this is the recursive thing that... pretty much is the master function.  
 (defn foo [s-s relfreqs omni-relfreq]
   (print "count s-s: ")
   (println (count s-s))
+  (println s-s)
   (print "count relfreqs: ")
   (println (count relfreqs))
   (let [relfreqs-new (conj relfreqs [(relative-freq (rest (first s-s))) (rest (first s-s))])
@@ -149,23 +222,12 @@
     (if (< (count s-s-new) 2) ; can't ever be 2, BTW.  3 choose 2 is 3, 2 choose 2 is 1. 
       s-s-new
       (foo s-s-new relfreqs-remaining omni-relfreq))))
+   
+
+
+
+
   
-
-;(time (foo s-s hundred-doc-relfreqs the-omni-relfreq))
-;(def s-s-new (sorted-pairs hundred-doc-relfreqs-new the-omni-relfreq))
-; this needs to be refactored in terms of 
-;(def s-s (sort (fn [[n1 _ _] [n2 _ _]] (< n1 n2)) 
-;	       (map #(score-pair % the-omni-relfreq) 
-;		    (combinations hundred-doc-relfreqs 2))))
-;(def s-s (score-combos-n-sort hundred-doc-relfreqs the-omni-relfreq))
-
-(def the-omni-relfreq (seq->relative-freq omni-doc)) 
-;make this pointfree
-(def hundred-doc-relfreqs (map #(vector (seq->relative-freq (file->seq %)) %) txt-files))
-
-(defn bar [relfreqs omni-relfreq]
-  (foo (score-combos-n-sort relfreqs omni-relfreq) relfreqs omni-relfreq))
-
 ;OK, I lost track of my original plan: compare the docs by their relative word frequency.  (that is, relative to themselves, but then compared to the relative word frequency of the entire corpus)
 
 ;STRATEGY:  use the big corpus from Norvig as my corpus, except I also must add whatever files I am going to compare, otherwise... blow.  
@@ -210,9 +272,15 @@
 
 ; for blog post - this seems ot be a version of Tf-idf, except hte idf part.  i think mine is better.  
 
-
-
-
+;need to make foo variadic to encompass bar.  was going to use fooob to make a fn variadic, but need to google when i have connectivity
+;NEXT: put logging stuff in the lambda inside filter-intersection (to find doubling up bug)
+; OK, for the refactor followup blog post, how about subclass the vector or maybe incanter vector thing so that it also holds a string.  then I can get the string back out even while using the matrix ops of incanter to do lots of stuff.  i really like this idea.
+;WOW - deep observation: a memoized function is just like a hash (map), except that.  Or, you can say that memoizing a function eliminates the need for the map holding the resulting data.  Tentiative idea: any time I have a map, look at axing it and using a memoized fn
+; consider rolling seq->relative-freq into relative-freq
+;WIWLN: i think i figured out the trouble with the current bug.  I think i needed to filter-intersection the winner immediately before adding the winner, not two steps later.  
+;      (I also figured out a *probably* superior way to deal with relfreqs - rely on the fact that they are memoized in the function, so just get them when needed, holding onto only the file-or-cat thing).  This needs some refactoring across at least three functions, tho, so better to do that after I try the above.  If the above does not fix the problem, then sure, do this to simplify the situation, verify it works in the same way as before (a true refactor) and only then get back to debugging!
+;WIW WHEN LAUNDERING:  just need to log what i'm sending to score-pair as second arg. i think it's just a map.  that's not going to work.
+; holy fucking crap - that was a pain in the ass.  back to where i was before with my plain old crappy bug.  
 
 
 
@@ -259,28 +327,7 @@
 ;    [(take 5 sorted) (take 5 (reverse sorted))]))
 
 
-(defn map-tree-basic [f tree]
-  (prn tree) 
-  (if (number? tree) 
-    (f tree) 
-    (if (empty? tree)
-      tree 
-      (cons (map-tree-basic f (first tree)) 
-	    (map-tree-basic f (rest tree))))) )
 
-; 
-; here's how you make this with conj.  interesting.  you use last instead of first (car) and butlast instead of rest (cdr).  cool.  
-; the type-converter is because conj always produces a list; type-converter converts that list back to what it was
-(defn map-tree  [f tree] 
-  (if (number? tree)  
-    (f tree) 
-    (if (empty? tree)
-      tree 
-      (let [type-converter (if (vector? tree) vec
-			       (if (list? tree) list*
-				   (if (set? tree) set
-				       (throw (Exception. (str "tree is unhandled type!" (type tree)))))))]
-	 
-	(conj (map-tree f (type-converter (butlast tree))) 
-	      (map-tree f (last tree))))))) 
- 
+
+
+
