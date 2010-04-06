@@ -38,7 +38,7 @@
     (apply println "args = " args)
     (apply f args)))
 
-(def DOC-COUNT 4)
+(def DOC-COUNT 16)
 (def DOC-OFFSET 24)
 
 (def all-txt-files (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File "/Users/herdrick/Dropbox") 
@@ -95,9 +95,6 @@
 
 ;here is where the huge number of relfreq distances are created (in rel-freq-distances) and immediately reduced to a single number (in score)
 (def score-pair (fn [all-word-relfreqs [[relfreq1 file-or-cat1] [relfreq2 file-or-cat2]] ] ; todo: make this a defn
-		  (println "score-pair")
-		  (println file-or-cat1)
-		  (println file-or-cat2)
 		  [(score (rel-freq-distances relfreq1 relfreq2 all-word-relfreqs)) file-or-cat1 file-or-cat2]))
 
 (use 'clojure.contrib.combinatorics) ; sadly, combinations don't produce lazy seqs 
@@ -181,12 +178,8 @@
 (def hundred-doc-relfreqs (map #(vector (seq->relative-freq (file->seq %)) %) txt-files))
 
 ;this is the recursive thing that... pretty much is the master function. 
-(defn foo-hosed
-  ([availables omni-relfreq] (foo-hosed (score-combos-n-sort (seq (map (fn [available] 
-								   (println "available = " available)
-								   [(relative-freq available) available]) 
-								 availables)) 
-						       omni-relfreq) availables omni-relfreq))       
+(defn foo
+  ([relfreqs omni-relfreq] (foo (score-combos-n-sort relfreqs corpus-relfreq) relfreqs omni-relfreq))     
   ([s-s relfreqs omni-relfreq] 
      ;(println "foo. s-s = " s-s)    
      ;(println)
@@ -202,27 +195,10 @@
        s-s
        (let [relfreqs-new (conj (filter-intersection (rest (first s-s)) relfreqs) [(relative-freq (rest (first s-s))) (rest (first s-s))])
 	     s-s-new (score-combos-n-sort relfreqs-new omni-relfreq)]
-					;(print "count s-s-new: ") 
-					;(println (count s-s-new))	 
-	 (foo-hosed s-s-new relfreqs-new omni-relfreq)))))
+	     ;(print "count s-s-new: ") 
+	     ;(println (count s-s-new))	 
+	 (foo s-s-new relfreqs-new omni-relfreq)))))
 
-
-;this is the recursive thing that... pretty much is the master function.  
-(defn foo [s-s relfreqs omni-relfreq]
-  (print "count s-s: ")
-  (println (count s-s))
-  (println s-s)
-  (print "count relfreqs: ")
-  (println (count relfreqs))
-  (let [relfreqs-new (conj relfreqs [(relative-freq (rest (first s-s))) (rest (first s-s))])
-	s-s-new (score-combos-n-sort relfreqs-new omni-relfreq)
-	relfreqs-remaining (filter-intersection (rest (first s-s-new)) relfreqs-new)]
-    (print "count s-s-new: ")
-    (println (count s-s-new))
-    (if (< (count s-s-new) 2) ; can't ever be 2, BTW.  3 choose 2 is 3, 2 choose 2 is 1. 
-      s-s-new
-      (foo s-s-new relfreqs-remaining omni-relfreq))))
-   
 
 
 
@@ -281,6 +257,7 @@
 ;      (I also figured out a *probably* superior way to deal with relfreqs - rely on the fact that they are memoized in the function, so just get them when needed, holding onto only the file-or-cat thing).  This needs some refactoring across at least three functions, tho, so better to do that after I try the above.  If the above does not fix the problem, then sure, do this to simplify the situation, verify it works in the same way as before (a true refactor) and only then get back to debugging!
 ;WIW WHEN LAUNDERING:  just need to log what i'm sending to score-pair as second arg. i think it's just a map.  that's not going to work.
 ; holy fucking crap - that was a pain in the ass.  back to where i was before with my plain old crappy bug.  
+; i think i can fix it by doing what i have in foo-hosed.  or I could refactor... no.  i was going to fix the bug, or at least try to by doing the foo-hosed thing.  now, if i could get online in this falafel joint i'd look up how to use git 
 
 
 
