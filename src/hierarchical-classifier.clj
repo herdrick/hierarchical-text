@@ -89,13 +89,14 @@
 ;scores a single Map of relative frequency distances (each is the frequency distance (between two docs) of a single word). this has an entry for each word in the entire corpus, i.e. it's huge 
 ;this sucks, but kinda works.  good enough.
 ;put this in the scope of score-pair?
-;uh, i think the / part is needless because all our rel-freq-distances have the same lenth (= to the length of the corpus word frequency map) and this is only for comparison.  todo: fix by killing it. 
+;uh, i think the / part is needless because all our rel-freq-distances have the same length (= to the length of the corpus word frequency map) and this is only for comparison.  todo: fix by killing it. UPDATE: somehow, when I did that it changed my tree result.  Have no clue why.  Try looking into that after I get the tree-display thing going, to some degree.
 (defn score [rel-freq-distances]
+  (println "(count rel-freq-distances)=" (count rel-freq-distances))
   (/ (reduce + (vals rel-freq-distances)) (count rel-freq-distances))) 
 
 ;here is where the huge number of relfreq distances are created (in rel-freq-distances) and immediately reduced to a single number (in score)
-(def score-pair (fn [all-word-relfreqs [[relfreq1 file-or-cat1] [relfreq2 file-or-cat2]] ] ; todo: make this a defn
-		  [(score (rel-freq-distances relfreq1 relfreq2 all-word-relfreqs)) file-or-cat1 file-or-cat2]))
+(defn score-pair [all-word-relfreqs [[relfreq1 file-or-cat1] [relfreq2 file-or-cat2]] ] ; todo: make this a defn
+  [(score (rel-freq-distances relfreq1 relfreq2 all-word-relfreqs)) file-or-cat1 file-or-cat2])
 
 (use 'clojure.contrib.combinatorics) ; sadly, combinations don't produce lazy seqs 
 
@@ -108,7 +109,7 @@
   ;(println)
   ;(println (first (combinations relfreqs 2)))
  (let [rez (sort (fn [[n1 _ _] [n2 _ _]] (< n1 n2)) 
-		 (map #(score-pair omni-relfreq %) ;todo: pointfree
+		 (map (partial score-pair omni-relfreq)
 		      (combinations relfreqs 2)))]
    ;(println "END score-combos-n-sort")
    rez))
