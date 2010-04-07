@@ -110,7 +110,7 @@
  (let [rez (sort (fn [[n1 _ _] [n2 _ _]] (< n1 n2)) 
 		 (map #(score-pair omni-relfreq %) ;todo: pointfree
 		      (combinations relfreqs 2)))]
-   (println "END score-combos-n-sort")
+   ;(println "END score-combos-n-sort")
    rez))
 ;ok, this isn't maybe a good place to divide into a fn, but i had to get moving forward to get my brain going so fuck it.
 ;(defn rescore [newlyweds old-pairs] (let [pairs (filter-intersection (rest newlyweds) old-pairs)]
@@ -144,14 +144,14 @@
 
 
 (def relative-freq (memoize (fn [cat-or-file]
-			      (println "relative-freq" (type cat-or-file))
-			      (println)
-			      (if (coll? cat-or-file) 
-				(do 
-				  (println "relative-freq  first" (first cat-or-file))
-				  (println)
-				  (println "relative-freq  second" (second cat-or-file))
-				  (println)))
+			      ;(println "relative-freq" (type cat-or-file))
+			      ;(println)
+			      ;(if (coll? cat-or-file) 
+				;(do 
+				;  (println "relative-freq  first" (first cat-or-file))
+				;  (println)
+				;  (println "relative-freq  second" (second cat-or-file))
+				;  (println)))
 			      
 			      (if (and (coll? cat-or-file) (= (count cat-or-file) 2))
 				(do (println "combining...")
