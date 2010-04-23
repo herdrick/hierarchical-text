@@ -7,41 +7,11 @@
 
 
 
-(defn member? [x sequ]
-  (some #{x} sequ))
 
-(defn print-coll [coll]
-  (if (not (empty? coll))
-    (do
-      (println (first coll))
-      (print-coll (rest coll)))))
-
-;lol - yes this already exists in the core.  it's 'memoize'.  hilarious.
-(let [c (ref {})]
-  
-  (defn cacher [f]
-    (fn [& args]
-      (let [c-val (c args)]
-	(if c-val
-	  (do
-	    (println "from cache!")
-	    c-val)
-	  (let [val (apply f args)]
-	    (dosync (ref-set c (conj (deref c) {args val})))
-	    val)))))
-  (defn get-cache []
-    c))
-
-;because error messages in clojure suck balls
-(defn arg-printer [f]
-  (fn [& args] 
-    (apply println "args = " args)
-    (apply f args)))
-
-(def DOC-COUNT 16)
+(def DOC-COUNT 4)
 (def DOC-OFFSET 24)
 
-(def all-txt-files (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File "/Users/herdrick/Dropbox") 
+(def all-txt-files (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File "/Users/herdrick/Dropbox/blog") 
 							       (into-array ["txt"]) true)))
 
 (def txt-files (take DOC-COUNT (drop DOC-OFFSET all-txt-files)))
@@ -67,14 +37,13 @@
 					       (conj rel-freqs [key (/ (float (freqs key)) word-count)])) ;would be clearer as (merge rel-freqs {key (/ (float (freqs key)) word-count)})   maybe
 					     {} docu)))))
  
-(defn val-subtract [key subtrahend m] 
-  (- (m key) subtrahend))
+(def corpus-relfreq (seq->relative-freq omni-doc)) 
+
 
 (use '(incanter core stats)) ;need this only for abs and mean
 
 ;returns the signature of distances between two documents' word freqs
 ;returned Map has a count = to the count of omni-relfreq, i.e. it's huge
-;can easily make this work for more than 2 relfreqs, i think by using apply on combine-dists
 ;refactor this using merge-into
 (defn rel-freq-distances [relfreqs1 relfreqs2 omni-relfreq]
   (reduce (fn [acc [word relfreq]] 
@@ -85,7 +54,6 @@
 	   
 ;scores a single Map of relative frequency distances (each is the frequency distance (between two docs) of a single word). this has an entry for each word in the entire corpus, i.e. it's huge 
 ;this sucks, but kinda works.  good enough.
-;put this in the scope of score-pair?
 ;uh, i think the / part is needless because all our rel-freq-distances have the same length (= to the length of the corpus word frequency map) and this is only for comparison.  todo: fix by killing it. UPDATE: somehow, when I did that it changed my tree result.  Have no clue why.  Try looking into that after I get the tree-display thing going, to some degree.
 (defn score [rel-freq-distances]
   ;(println "(count rel-freq-distances)=" (count rel-freq-distances))
@@ -99,10 +67,9 @@
 
  
 (defn score-combos-n-sort [relfreqs omni-relfreq]
-  (let [rez (sort (fn [[n1 _ _] [n2 _ _]] (< n1 n2)) 
+  (sort (fn [[n1 _ _] [n2 _ _]] (< n1 n2)) 
 		  (map (partial score-pair omni-relfreq)
-		       (combinations relfreqs 2)))]
-    rez))
+		       (combinations relfreqs 2))))
 
 
 
@@ -122,15 +89,18 @@
 				  (new java.lang.Error (str "not file nor pair of freqs"))))))); this is a file instead of a collection of 
 
   
-(def corpus-relfreq (seq->relative-freq omni-doc)) 
 
-;make this pointfree
 (def hundred-doc-relfreqs (map #(vector (seq->relative-freq (file->seq %)) %) txt-files))
 
 ;likely i shouldn't have made a general fn for this but instead just inlined it.  but doing it this way cleared my head - allowed me to think about this properly   
 ;DURRRRR this is filter-intersection: (filter #(some (set [2 3]) %) [[1 9] [3 4] [5  2 6]])
 (defn filter-intersection [sequence sequences]
-  (filter #(some (set sequence) %) sequences))
+  (filter (complement #(some (set sequence) %)) sequences))
+
+;(defn filter-intersection [sequence sequences]
+;  (filter (fn [sequ] 
+;	    (empty? (clojure.set/intersection (set sequ) 
+;					      (set sequence)))) sequences))
 
 ;this is the recursive thing that... pretty much is the master function. 
 (defn foo
@@ -142,7 +112,7 @@
 	     s-s-new (score-combos-n-sort relfreqs-new omni-relfreq)]
 	 (foo s-s-new relfreqs-new omni-relfreq)))))
 
-
+ 
 
 
 
@@ -213,6 +183,40 @@
 ;(defn map-intersection [map1 map2]
 ;  (let [intersected-keys (clojure.set/intersection (set (keys map1)) (set (keys map2)))] 
 ;    [(select-keys map1 intersected-keys) (select-keys map2 intersected-keys)]))
+
+
+;(defn print-coll [coll]
+;  (if (not (empty? coll))
+;    (do
+;      (println (first coll))
+;      (print-coll (rest coll)))))
+;because error messages in clojure suck balls
+(defn arg-printer [f]
+  (fn [& args] 
+    (apply println "args = " args)
+    (apply f args)))
+
+(defn val-subtract [key subtrahend m] 
+  (- (m key) subtrahend))
+
+;lol - yes this already exists in the core.  it's 'memoize'.  hilarious.
+;(let [c (ref {})]
+;  
+;  (defn cacher [f]
+;    (fn [& args]
+;      (let [c-val (c args)];
+;	(if c-val
+;	  (do
+;	    (println "from cache!")
+;	    c-val)
+;	  (let [val (apply f args)]
+;	    (dosync (ref-set c (conj (deref c) {args val})))
+;	    val)))))
+; (defn get-cache []
+;    c))
+
+;(defn member? [x sequ]
+;  (some #{x} sequ))
 
 ;probably useful, but not here
 ;(defn remove-multi [targets sequ] 
