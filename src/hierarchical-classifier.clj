@@ -29,10 +29,8 @@
 
 ;takes a list of strings
 (def seq->relative-freq (memoize (fn [docu] 
-				   ;(println (hash docu))
 				   (let [freqs (freqs docu)
 					 word-count (count docu)]
-					;(print word-count)
 				     (reduce (fn [rel-freqs key]
 					       (conj rel-freqs [key (/ (float (freqs key)) word-count)])) ;would be clearer as (merge rel-freqs {key (/ (float (freqs key)) word-count)})   maybe
 					     {} docu)))))
@@ -56,7 +54,6 @@
 ;this sucks, but kinda works.  good enough.
 ;uh, i think the / part is needless because all our rel-freq-distances have the same length (= to the length of the corpus word frequency map) and this is only for comparison.  todo: fix by killing it. UPDATE: somehow, when I did that it changed my tree result.  Have no clue why.  Try looking into that after I get the tree-display thing going, to some degree.
 (defn score [rel-freq-distances]
-  ;(println "(count rel-freq-distances)=" (count rel-freq-distances))
   (/ (reduce + (vals rel-freq-distances)) (count rel-freq-distances))) 
 
 ;here is where the huge number of relfreq distances are created (in rel-freq-distances) and immediately reduced to a single number (in score)
@@ -79,14 +76,14 @@
 
 (def relative-freq (memoize (fn [cat-or-file]
 			      (if (and (coll? cat-or-file) (= (count cat-or-file) 2))
-				(do (println "combining...")
+				(do ;(println "combining...")
 				    (combine-relfreqs (relative-freq (first cat-or-file)) 
 						      (relative-freq (second cat-or-file))))
 				
 				(if (= "class java.io.File" (str (type cat-or-file)))
-				  (do (println "it's a file...")
+				  (do ;(println "it's a file...")
 				      (seq->relative-freq (file->seq cat-or-file)))
-				  (new java.lang.Error (str "not file nor pair of freqs"))))))); this is a file instead of a collection of 
+				  (new java.lang.Error (str "not file nor pair of freqs")))))))
 
   
 
