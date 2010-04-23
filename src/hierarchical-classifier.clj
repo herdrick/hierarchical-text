@@ -89,15 +89,8 @@
 
 (def hundred-doc-relfreqs (map #(vector (seq->relative-freq (file->seq %)) %) txt-files))
 
-;likely i shouldn't have made a general fn for this but instead just inlined it.  but doing it this way cleared my head - allowed me to think about this properly   
-;DURRRRR this is filter-intersection: (filter #(some (set [2 3]) %) [[1 9] [3 4] [5  2 6]])
 (defn filter-intersection [sequence sequences]
   (filter (complement #(some (set sequence) %)) sequences))
-
-;(defn filter-intersection [sequence sequences]
-;  (filter (fn [sequ] 
-;	    (empty? (clojure.set/intersection (set sequ) 
-;					      (set sequence)))) sequences))
 
 ;this is the recursive thing that... pretty much is the master function. 
 (defn foo
