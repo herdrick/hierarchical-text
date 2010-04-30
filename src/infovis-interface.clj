@@ -15,7 +15,7 @@
 
 (defn pair [two]
   (str "{id: 'pairnode" (rand) 
-       "', name: 'some name here"  
+       "', name: 'summary here"  
        "', children: [" 
        (node (first two)) 
        " , " 
