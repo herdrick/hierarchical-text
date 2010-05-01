@@ -11,7 +11,7 @@
     (pair whatever)))
 
 (defn leaf [file]
-  (str "{id: 'leafnode" (rand) "', name: '" (str file) "', data: {}, children: [] }"))
+  (str "{id: 'leafnode" (rand) "', name: '" (.replace (str file) "'" "") "', data: {}, children: [] }"))
 
 (defn pair [two]
   (str "{id: 'pairnode" (rand) 
