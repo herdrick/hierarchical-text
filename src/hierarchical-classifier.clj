@@ -8,10 +8,10 @@
 
 
 
-(def DOC-COUNT 4)
+(def DOC-COUNT 32)
 (def DOC-OFFSET 24)
-
-(def all-txt-files (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File "/Users/herdrick/Dropbox/blog") 
+(def directory-string "/Users/herdrick/Dropbox/blog")
+(def all-txt-files (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File directory-string) 
 							       (into-array ["txt"]) true)))
 
 (def txt-files (take DOC-COUNT (drop DOC-OFFSET all-txt-files)))
@@ -102,8 +102,8 @@
 	     s-s-new (score-combos-n-sort relfreqs-new omni-relfreq)]
 	 (foo s-s-new relfreqs-new omni-relfreq)))))
 
- 
-
+;here's how i'm calling this right now:
+;(.replace (node (rest (first (foo hundred-doc-relfreqs corpus-relfreq)))) directory-string "")
 
 
   
