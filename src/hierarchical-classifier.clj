@@ -87,7 +87,7 @@
 
   
 
-(def hundred-doc-relfreqs (map #(vector (seq->relative-freq (file->seq %)) %) txt-files))
+(def docs-relfreqs (map #(vector (seq->relative-freq (file->seq %)) %) txt-files))
 
 (defn filter-intersection [sequence sequences]
   (filter (complement #(some (set sequence) %)) sequences))
@@ -103,7 +103,7 @@
 	 (foo s-s-new relfreqs-new omni-relfreq)))))
 
 ;here's how i'm calling this right now:
-;(.replace (node (rest (first (foo hundred-doc-relfreqs corpus-relfreq)))) directory-string "")
+;(.replace (node (rest (first (foo docs-relfreqs corpus-relfreq)))) directory-string "")
 
 
   
