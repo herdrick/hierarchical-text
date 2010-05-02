@@ -40,20 +40,6 @@
 
 (use '(incanter core stats)) ;need this only for abs and mean
 
-;returns the signature of distances between two documents' word freqs
-;returned Map has a count = to the count of omni-relfreq, i.e. it's huge
-;refactor this using merge-into
-;(defn rel-freq-distances [relfreqs1 relfreqs2 omni-relfreq]
-;  (reduce (fn [acc [word relfreq]] 
-;  	    (conj acc [word (abs (- (get relfreqs1 word 0) (get relfreqs2 word 0)))]))	
-;	  {}  
-;	  omni-relfreq))
-	   
-;scores a single Map of relative frequency distances (each is the frequency distance (between two docs) of a single word). this has an entry for each word in the entire corpus, i.e. it's huge 
-;this sucks, but kinda works.  good enough.
-;uh, i think the / part is needless because all our rel-freq-distances have the same length (= to the length of the corpus word frequency map) and this is only for comparison.  todo: fix by killing it. UPDATE: somehow, when I did that it changed my tree result.  Have no clue why.  Try looking into that after I get the tree-display thing going, to some degree.
-;(defn score [rel-freq-distances]
-;  (/ (reduce + (vals rel-freq-distances)) (count rel-freq-distances))) 
 
 ;returns the euclidean distance between two documents
 (defn euclid [relfreqs1 relfreqs2 omni-relfreq]
