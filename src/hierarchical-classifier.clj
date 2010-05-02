@@ -8,9 +8,9 @@
 
 
 
-(def DOC-COUNT 32)
-(def DOC-OFFSET 24)
-(def directory-string "/Users/herdrick/Dropbox/blog")
+(def DOC-COUNT 1000000)
+(def DOC-OFFSET 0)
+(def directory-string "/Users/herdrick/Dropbox/blog/to-classify")
 (def all-txt-files (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File directory-string) 
 							       (into-array ["txt"]) true)))
 
@@ -19,7 +19,7 @@
 (defn file->seq [file]
   (re-seq #"[a-z]+" 
 	  (org.apache.commons.lang.StringUtils/lowerCase (slurp (.toString file)))))
-
+ 
 (def omni-doc (apply concat (map file->seq txt-files)))
  
 (defn freqs [words]
@@ -43,22 +43,28 @@
 ;returns the signature of distances between two documents' word freqs
 ;returned Map has a count = to the count of omni-relfreq, i.e. it's huge
 ;refactor this using merge-into
-(defn rel-freq-distances [relfreqs1 relfreqs2 omni-relfreq]
-  (reduce (fn [acc [word relfreq]] 
-  	    (conj acc [word (abs (/ (- (get relfreqs1 word 0) (get relfreqs2 word 0))
-				    relfreq))])) 	  
-	  {}  
-	  omni-relfreq))
+;(defn rel-freq-distances [relfreqs1 relfreqs2 omni-relfreq]
+;  (reduce (fn [acc [word relfreq]] 
+;  	    (conj acc [word (abs (- (get relfreqs1 word 0) (get relfreqs2 word 0)))]))	
+;	  {}  
+;	  omni-relfreq))
 	   
 ;scores a single Map of relative frequency distances (each is the frequency distance (between two docs) of a single word). this has an entry for each word in the entire corpus, i.e. it's huge 
 ;this sucks, but kinda works.  good enough.
 ;uh, i think the / part is needless because all our rel-freq-distances have the same length (= to the length of the corpus word frequency map) and this is only for comparison.  todo: fix by killing it. UPDATE: somehow, when I did that it changed my tree result.  Have no clue why.  Try looking into that after I get the tree-display thing going, to some degree.
-(defn score [rel-freq-distances]
-  (/ (reduce + (vals rel-freq-distances)) (count rel-freq-distances))) 
+;(defn score [rel-freq-distances]
+;  (/ (reduce + (vals rel-freq-distances)) (count rel-freq-distances))) 
 
-;here is where the huge number of relfreq distances are created (in rel-freq-distances) and immediately reduced to a single number (in score)
+;returns the euclidean distance between two documents
+(defn euclid [relfreqs1 relfreqs2 omni-relfreq]
+  (sqrt (reduce + (map (fn [[word freq]]
+			 (sq (abs (- (get relfreqs1 word 0) (get relfreqs2 word 0)))))
+		       omni-relfreq))))
+
+
+;todo: FALSE COMMENT here is where the huge number of relfreq distances are created (in rel-freq-distances) and immediately reduced to a single number (in score)
 (defn score-pair [all-word-relfreqs [[relfreq1 file-or-cat1] [relfreq2 file-or-cat2]] ] ; todo: make this a defn
-  [(score (rel-freq-distances relfreq1 relfreq2 all-word-relfreqs)) file-or-cat1 file-or-cat2])
+  [(euclid relfreq1 relfreq2 all-word-relfreqs) file-or-cat1 file-or-cat2])
 
 (use 'clojure.contrib.combinatorics) ; sadly, combinations don't produce lazy seqs 
 
@@ -104,9 +110,6 @@
 
 ;here's how i'm calling this right now:
 ;(.replace (node (rest (first (foo docs-relfreqs corpus-relfreq)))) directory-string "")
-
-
-  
 
 
 
