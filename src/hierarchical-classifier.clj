@@ -67,7 +67,7 @@
 
 
 (def relative-freq (memoize (fn [cat-or-file]
-			      (if (and (coll? cat-or-file) (= (count cat-or-file) 2))
+			      (if (and (coll? cat-or-file) (= (count cat-or-file) 3))
 				(do ;(println "combining...")
 				    (combine-relfreqs (relative-freq (first cat-or-file)) 
 						      (relative-freq (second cat-or-file))))
@@ -90,10 +90,19 @@
   ([s-s relfreqs omni-relfreq] 
      (if (< (count s-s) 2) ; can't ever be 2, BTW.  3 choose 2 is 3, 2 choose 2 is 1. 
        s-s
-       (let [relfreqs-new (conj (filter-intersection (rest (first s-s)) relfreqs) [(relative-freq (rest (first s-s))) (rest (first s-s))])
-	     s-s-new (score-combos-n-sort relfreqs-new omni-relfreq)]
-	 (foo s-s-new relfreqs-new omni-relfreq)))))
-
+       (do
+	 (println "FRIST:" (first s-s))
+	 (println)
+	 (println "SECOND:" (second s-s))
+	 
+	 (println)
+	 (println "RELFREQ: " (first relfreqs))
+	 (println)
+	 
+	 (let [relfreqs-new (conj (filter-intersection (rest (first s-s)) relfreqs) [(relative-freq (rest (first s-s))) (first s-s)])
+	       s-s-new (score-combos-n-sort relfreqs-new omni-relfreq)]
+	   (foo s-s-new relfreqs-new omni-relfreq))))))
+  
 ;here's how i'm calling this right now:
 ;(.replace (node (rest (first (foo docs-relfreqs corpus-relfreq)))) directory-string "")
 
