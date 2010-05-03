@@ -9,15 +9,17 @@
   (defn leaf [file]
     (str "{id: 'leafnode" (rand) "', name: '" (.replace (str file) "'" "") "', data: {}, children: [] }"))
 
-  (defn pair [two]
+  (defn pair [the-pair]
+    (def score first)
+    (def left-branch second)
+    (def right-branch #(nth % 2))
     (str "{id: 'pairnode" (rand) 
 	 "', name: 'summary here"  
-	 "', data: {}" 
-	 ", children: [" 
-	 (node (first two)) 
+	 "', data: {score: '" (score the-pair)
+	 "', children: [" 
+	 (node (left-branch the-pair)) 
 	 " , " 
-	 (node (second two)) "] }"))
-
+	 (node (right-branch the-pair)) "] }"))
   (if (= "class java.io.File" (str (type whatever)))
     (leaf whatever)
     (pair whatever)))

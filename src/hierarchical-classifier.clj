@@ -54,12 +54,10 @@
 
 (use 'clojure.contrib.combinatorics) ; sadly, combinations don't produce lazy seqs 
 
- 
 (defn score-combos-n-sort [relfreqs omni-relfreq]
-  (sort (fn [[n1 _ _] [n2 _ _]] (< n1 n2)) 
+  (sort (fn [[score-1 _ _] [score-2 _ _]] (< score-1 score-2)) 
 		  (map (partial score-pair omni-relfreq)
 		       (combinations relfreqs 2))))
-
 
 
 (defn combine-relfreqs [rf1 rf2]
@@ -67,15 +65,15 @@
 
 
 (def relative-freq (memoize (fn [cat-or-file]
-			      (if (and (coll? cat-or-file) (= (count cat-or-file) 3))
-				(do ;(println "combining...")
-				    (combine-relfreqs (relative-freq (first cat-or-file)) 
-						      (relative-freq (second cat-or-file))))
-				
-				(if (= "class java.io.File" (str (type cat-or-file)))
-				  (do ;(println "it's a file...")
-				      (seq->relative-freq (file->seq cat-or-file)))
-				  (new java.lang.Error (str "not file nor pair of freqs")))))))
+			      (println "cat-or-file=" cat-or-file)
+			      (println)
+			      (cond (and (coll? cat-or-file) (= (count cat-or-file) 2))   (do ;(println "combining...")
+											    (combine-relfreqs (relative-freq (first cat-or-file)) 
+													      (relative-freq (second cat-or-file))))
+				    
+				    (= "class java.io.File" (str (type cat-or-file))) (do ;(println "it's a file...")
+											(seq->relative-freq (file->seq cat-or-file)))
+				    true (throw (new java.lang.Error (str "not file nor length 2 collection. type: " (str (type cat-or-file)) "    toString: " cat-or-file)))))))
 
   
 
@@ -89,7 +87,9 @@
   ([relfreqs omni-relfreq] (foo (score-combos-n-sort relfreqs corpus-relfreq) relfreqs omni-relfreq))     
   ([s-s relfreqs omni-relfreq] 
      (if (< (count s-s) 2) ; can't ever be 2, BTW.  3 choose 2 is 3, 2 choose 2 is 1. 
-       s-s
+       (do 
+	 (println "RELFREQ AT END: " (second relfreqs))
+	 s-s)
        (do
 	 (println "FRIST:" (first s-s))
 	 (println)
@@ -98,15 +98,20 @@
 	 (println)
 	 (println "RELFREQ: " (first relfreqs))
 	 (println)
-	 
-	 (let [relfreqs-new (conj (filter-intersection (rest (first s-s)) relfreqs) [(relative-freq (rest (first s-s))) (first s-s)])
+	 (let [relfreqs-new (conj (filter-intersection (rest (first s-s)) relfreqs) [(relative-freq (rest (first s-s))) (rest (first s-s))])
 	       s-s-new (score-combos-n-sort relfreqs-new omni-relfreq)]
 	   (foo s-s-new relfreqs-new omni-relfreq))))))
-  
+
+
+; alternative thought...
+; have s-c-b-s return relfreqs-new-scored-n-sorted (so I guess each relfreq would be length 3 instead of current length 2.  so it'd be:  score, file(s), map of relfreqs.  huh.  then the files which don't currently have scores would be give score of null or something.  shit.  i should have thought of this from the beginning, but i was laboriously thinking my way thru the problem, and didn't look ahead enough to try "solving the problem from the middle" i.e. classically what you do when writing a recursive function.  i should have just imagined that case, penciled out what i wanted for datta and then shoehorned the edge cases (the files, or leaf nodes, that haven't been scored) into that. huh.  well, better late than never.
+
 ;here's how i'm calling this right now:
 ;(.replace (node (rest (first (foo docs-relfreqs corpus-relfreq)))) directory-string "")
 
-
+(defn fprn [s]
+  (println s)
+  s)
 
 
 
