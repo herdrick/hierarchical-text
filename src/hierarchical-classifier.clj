@@ -6,7 +6,6 @@
 [["north-america" [:usa :miami]]] 
 
 ; somewhere in grep-able codespace i need to keep track of the idea that (file? o) is just (instance java.io.File o).  This is good Java interop juju.
-(println "f")
 
 (def DOC-COUNT 3)
 (def DOC-OFFSET 0)
@@ -71,8 +70,6 @@
 
 
 (def relative-freq (memoize (fn [rfo]
-			      (println "rfo=" rfo)
-			      (println)
 			      (let [r-o-f (rfos-or-file rfo)]
 			      (if (instance? java.io.File r-o-f)
 				(words->relative-freq (file->seq r-o-f))
@@ -87,22 +84,17 @@
 (use 'clojure.contrib.combinatorics) ; sadly, combinations don't produce lazy seqs 
 
 (def score-pair (fn [omni-relfreqs [rfo1 rfo2]] ; todo: make this a defn
-		  (println "start s..p.")
 		  (make-rfo-minus-relfreqs (euclid (relfreqs rfo1) (relfreqs rfo2) omni-relfreqs) 
 					   [(make-rfo-minus-relfreqs (score rfo1) (rfos-or-file rfo1)) ;making a mock rfo here.  it lacks relfreqs but has the closure property (in the math/SICP sense) like all rfos
 					    (make-rfo-minus-relfreqs (score rfo2) (rfos-or-file rfo2))]))) 
 
 (defn best-pairing [rfos omni-relfreqs]
-  (println "b.p.")
-  (println "(count rfos)" (count rfos))
   (let [combos (sort (fn [rfo1 rfo2] (< (score rfo1) (score rfo2))) ; rfo1 and rfo2 are lacking relfreqs.  each represents a candidate pair - only the best scoring one will be made into a full rfo.
 		     (map  (partial score-pair omni-relfreqs) 
 			   (combinations 
 			    rfos 
 			    2)))
 	best-pair (first combos)]
-    (println "combos:")
-    (println combos)
     (make-rfo (score best-pair) (relative-freq best-pair) (rfos-or-file best-pair))))
 
 
@@ -134,15 +126,6 @@
 
 ;this is the recursive thing that... pretty much is the master function. 
 (defn foo [relfreqs omni-relfreq]
-  (println "count relfreqs = " (count relfreqs))
-  (println)
-  (println)
-  (println)
-  (println "relfreqs:")
-  (println relfreqs)
-  (println)
-  (println)
-  (println)
   
   ;([relfreqs omni-relfreq] (foo (score-combos-n-sort relfreqs corpus-relfreq) relfreqs omni-relfreq))        
   (if (< (count relfreqs) 2) ; can't ever be 2, BTW.  3 choose 2 is 3, 2 choose 2 is 1. 
@@ -152,13 +135,7 @@
 						 (or (=rfos-ignore-relfreqs rfo (first (rfos-or-file best-pairing-rfo)))
 						     (=rfos-ignore-relfreqs rfo (second (rfos-or-file best-pairing-rfo))))))
 				   relfreqs)]
-      (println "(rfos-or-file best-pairing-rfo) : " (rfos-or-file best-pairing-rfo))
-      (println (type relfreqs-cleaned))
 
-      (println (count relfreqs-cleaned))
-      
-      (println "relfreqs-cleaned = " relfreqs-cleaned)
-     
       (foo (conj relfreqs-cleaned best-pairing-rfo) omni-relfreq))))
 
 ;here's how i'm calling this right now:
