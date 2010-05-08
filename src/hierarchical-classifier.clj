@@ -81,29 +81,28 @@
 					    (make-rfo-minus-relfreqs (score rfo2) (rfos-or-file rfo2))]))) 
 
 (defn best-pairing [rfos omni-relfreqs]
-  (let [combos (sort (fn [rfo1 rfo2] (< (score rfo1) (score rfo2))) ; rfo1 and rfo2 are mock rfos, lacking relfreqs.  each represents a candidate pair - only the best scoring one will be made into a full rfo.
+  (let [combos (sort (fn [rfo1 rfo2] (compare (score rfo1) (score rfo2))) ; rfo1 and rfo2 are mock rfos, lacking relfreqs.  each represents a candidate pair - only the best scoring one will be made into a full rfo.
 		     (map  (partial score-pair omni-relfreqs) 
 			   (combinations rfos 2)))
 	best-pair (first combos)]
     (make-rfo (score best-pair) (relative-freq best-pair) (rfos-or-file best-pair))))
 
-(def docs-rfos (map #(make-rfo 99999999 (words->relative-freq (file->seq %)) %) txt-files))
+(def docs-rfos (map #(make-rfo nil (words->relative-freq (file->seq %)) %) txt-files))
      
 (defn =rfos-ignore-relfreqs [rfo1 rfo2]
   (and (= (score rfo1) (score rfo2)) 
        (= (rfos-or-file rfo1) (rfos-or-file rfo2))))
 	    
-
+(use 'clojure.walk)
 ;this is the recursive thing that... pretty much is the master function. 
 (defn foo [rfos omni-relfreq]
   (if (< (count rfos) 2) ; can't ever be 2, BTW.  3 choose 2 is 3, 2 choose 2 is 1. 
-    rfos
+    (postwalk-replace {(second (first rfos)) nil} rfos) ; this postwalk-replace (tree replace) is to axe the final matchup's relfreqs for readability
     (let [best-pairing-rfo (best-pairing rfos omni-relfreq)
 	  rfos-cleaned (filter (complement (fn [rfo]
-						 (or (=rfos-ignore-relfreqs rfo (first (rfos-or-file best-pairing-rfo)))
-						     (=rfos-ignore-relfreqs rfo (second (rfos-or-file best-pairing-rfo))))))
-				   rfos)]
-
+					     (or (=rfos-ignore-relfreqs rfo (first (rfos-or-file best-pairing-rfo)))
+						 (=rfos-ignore-relfreqs rfo (second (rfos-or-file best-pairing-rfo))))))
+			       rfos)]
       (foo (conj rfos-cleaned best-pairing-rfo) omni-relfreq))))
 
 ;here's how i'm calling this right now:
@@ -112,6 +111,8 @@
 (defn fprn [s]
   (println s)
   s)
+
+
 
 
  
