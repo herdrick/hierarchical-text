@@ -6,22 +6,24 @@
 ;}
 
 (defn node [whatever]
-  (defn leaf [file]
-    (str "{id: 'leafnode" (rand) "', name: '" (.replace (str file) "'" "") "', data: {}, children: [] }"))
+  (defn leaf [rfo]
+    (str "{id: 'leafnode" (rand) "', name: '" (.replace (str (rfos-or-file rfo)) "'" "") "', data: {}, children: [] }"))
 
-  (defn pair [the-pair]
-    (def score first)
-    (def left-branch second)
-    (def right-branch #(nth % 2))
+  (defn pair [rfo]
+    ;(def left-branch second)
+    ;(def right-branch #(nth % 2))
     (str "{id: 'pairnode" (rand) 
-	 "', name: 'summary here"  
-	 "', data: {score: '" (score the-pair)
-	 "', children: [" 
-	 (node (left-branch the-pair)) 
+	 "', name: '" (score rfo)   
+	 "', data: {score: '" (score rfo)
+	 "'}, children: [" 
+	 (node (first (rfos-or-file rfo))) 
 	 " , " 
-	 (node (right-branch the-pair)) "] }"))
-  (if (= "class java.io.File" (str (type whatever)))
+	 (node (second (rfos-or-file rfo))) "] }"))
+  
+  (if (instance? java.io.File (rfos-or-file whatever))
     (leaf whatever)
     (pair whatever)))
 
 
+
+(node [0.2731772546734316 nil (new java.io.File "/Users/herdrick/Dropbox/blog/to-classify/Lisp and Google.txt")])
