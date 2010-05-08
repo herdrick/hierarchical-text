@@ -72,10 +72,6 @@
 				(do ;(println "combining...")
 				  (combine-relfreqs (relative-freq (first r-o-f)) 
 						    (relative-freq (second r-o-f)))))))))
-					;(instance? java.io.File rfos-or-file) (do ;(println "it's a file...")
-					;					      (seq->relative-freq (file->seq rfos-or-file)))
-			     ;(throw (new java.lang.Error (str "not an rfo! type: " (str (type rfos)) "    toString: " rfos))))))
-
 
 (use 'clojure.contrib.combinatorics) ; sadly, combinations don't produce lazy seqs 
 
@@ -85,20 +81,13 @@
 					    (make-rfo-minus-relfreqs (score rfo2) (rfos-or-file rfo2))]))) 
 
 (defn best-pairing [rfos omni-relfreqs]
-  (let [combos (sort (fn [rfo1 rfo2] (< (score rfo1) (score rfo2))) ; rfo1 and rfo2 are lacking relfreqs.  each represents a candidate pair - only the best scoring one will be made into a full rfo.
+  (let [combos (sort (fn [rfo1 rfo2] (< (score rfo1) (score rfo2))) ; rfo1 and rfo2 are mock rfos, lacking relfreqs.  each represents a candidate pair - only the best scoring one will be made into a full rfo.
 		     (map  (partial score-pair omni-relfreqs) 
-			   (combinations 
-			    rfos 
-			    2)))
+			   (combinations rfos 2)))
 	best-pair (first combos)]
     (make-rfo (score best-pair) (relative-freq best-pair) (rfos-or-file best-pair))))
 
- 
-(def docs-relfreqs (map #(make-rfo 99999999 (words->relative-freq (file->seq %)) %) txt-files))
-
-
-;(defn filter-intersection [sequence sequences]
-;  (filter (complement #(some (set sequence) %)) sequences))
+(def docs-rfos (map #(make-rfo 99999999 (words->relative-freq (file->seq %)) %) txt-files))
      
 (defn =rfos-ignore-relfreqs [rfo1 rfo2]
   (and (= (score rfo1) (score rfo2)) 
@@ -106,21 +95,19 @@
 	    
 
 ;this is the recursive thing that... pretty much is the master function. 
-(defn foo [relfreqs omni-relfreq]
-  
-  ;([relfreqs omni-relfreq] (foo (score-combos-n-sort relfreqs corpus-relfreq) relfreqs omni-relfreq))        
-  (if (< (count relfreqs) 2) ; can't ever be 2, BTW.  3 choose 2 is 3, 2 choose 2 is 1. 
-    relfreqs
-    (let [best-pairing-rfo (best-pairing relfreqs omni-relfreq)
-	  relfreqs-cleaned (filter (complement (fn [rfo]
+(defn foo [rfos omni-relfreq]
+  (if (< (count rfos) 2) ; can't ever be 2, BTW.  3 choose 2 is 3, 2 choose 2 is 1. 
+    rfos
+    (let [best-pairing-rfo (best-pairing rfos omni-relfreq)
+	  rfos-cleaned (filter (complement (fn [rfo]
 						 (or (=rfos-ignore-relfreqs rfo (first (rfos-or-file best-pairing-rfo)))
 						     (=rfos-ignore-relfreqs rfo (second (rfos-or-file best-pairing-rfo))))))
-				   relfreqs)]
+				   rfos)]
 
-      (foo (conj relfreqs-cleaned best-pairing-rfo) omni-relfreq))))
+      (foo (conj rfos-cleaned best-pairing-rfo) omni-relfreq))))
 
 ;here's how i'm calling this right now:
-;(.replace (node (rest (first (foo docs-relfreqs corpus-relfreq)))) directory-string "")
+;(.replace (node (rest (first (foo docs-rfos corpus-relfreq)))) directory-string "")
 
 (defn fprn [s]
   (println s)
