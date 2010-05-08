@@ -5,7 +5,7 @@
 ;summation of all inverses of the Euclidian distances
 [["north-america" [:usa :miami]]] 
 
-; somewhere in grep-able codespace i need to keep track of the idea that (file? o) is just (instance java.io.File o).  This is good Java interop juju.
+; somewhere in grep-able codespace i need to keep track of the idea that (file? o) is just (instance? java.io.File o).  This is good Java interop juju.
 
 (def DOC-COUNT 3)
 (def DOC-OFFSET 0)
@@ -48,13 +48,9 @@
 (defn make-rfo-minus-relfreqs [score rfos-or-file]
   (make-rfo score nil rfos-or-file))
 
-;(def rfo-maybe? #(and (coll? %) (= 3 (count %))))
-
 (def corpus-relfreq (words->relative-freq omni-doc)) 
 
-
 (use '(incanter core stats)) ;need this only for abs and mean
-
 
 ;returns the euclidean distance between two documents
 (defn euclid [relfreqs1 relfreqs2 omni-relfreq]
@@ -97,27 +93,12 @@
 	best-pair (first combos)]
     (make-rfo (score best-pair) (relative-freq best-pair) (rfos-or-file best-pair))))
 
-
-;(defn scored-pairings [rfos omni-relfreqs]
-;  (sort (fn [rfo-pair-1 rfo-pair-2]
-;	  (< (score-pair omni-relfreqs (first rfo-pair-1) (second rfo-pair-1)) 
-;	     (score-pair omni-relfreqs (first rfo-pair-2) (second rfo-pair-2)))) 
-;	(combinations rfos 2)))
  
 (def docs-relfreqs (map #(make-rfo 99999999 (words->relative-freq (file->seq %)) %) txt-files))
 
-;(println "last: " (last (combinations docs-relfreqs 2)))
 
 ;(defn filter-intersection [sequence sequences]
 ;  (filter (complement #(some (set sequence) %)) sequences))
-
-
-;(defn fltr [rfos-pair rfos]
-;  (filter (fn [rfo] 
-;	    (some (set rfos-pair) 
-	    
-;(or (= (rfos-or-file rfo) (first (rfos-or-file rfos-pair))
-
      
 (defn =rfos-ignore-relfreqs [rfo1 rfo2]
   (and (= (score rfo1) (score rfo2)) 
@@ -140,8 +121,6 @@
 
 ;here's how i'm calling this right now:
 ;(.replace (node (rest (first (foo docs-relfreqs corpus-relfreq)))) directory-string "")
-
-;(filter (fn [rel
 
 (defn fprn [s]
   (println s)
