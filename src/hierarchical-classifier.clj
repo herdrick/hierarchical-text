@@ -4,14 +4,14 @@
 ;porportions 
 ;summation of all inverses of the Euclidian distances
 [["north-america" [:usa :miami]]] 
-
+ 
 ; somewhere in grep-able codespace i need to keep track of the idea that (file? o) is just (instance? java.io.File o).  This is good Java interop juju.
 
-(def DOC-COUNT 3)
+(def DOC-COUNT 99)
 (def DOC-OFFSET 0)
 (def directory-string "/Users/herdrick/Dropbox/blog/to-classify")
 (def all-txt-files (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File directory-string) 
-							       (into-array ["txt"]) true)))
+							       (into-array ["txt" "html"]) true)))
 
 (def txt-files (take DOC-COUNT (drop DOC-OFFSET all-txt-files)))
 
@@ -42,11 +42,11 @@
 (def relfreqs second)
 (def rfos-or-file  #(nth % 2))
 
-(defn make-rfo [score relfreqs rfos-or-file]
-  [score relfreqs rfos-or-file]) 
+;(defn make-rfo [score relfreqs rfos-or-file]
+;  [score relfreqs rfos-or-file]) 
 
-(defn make-rfo-minus-relfreqs [score rfos-or-file]
-  (make-rfo score nil rfos-or-file))
+(defn make-rfo [{:keys [score relfreqs rfos-or-file]}]
+  [score relfreqs rfos-or-file]) 
 
 (def corpus-relfreq (words->relative-freq omni-doc)) 
 
@@ -75,18 +75,18 @@
 (use 'clojure.contrib.combinatorics) ; sadly, combinations don't produce lazy seqs 
 
 (def score-pair (fn [omni-relfreqs [rfo1 rfo2]] ; todo: make this a defn
-		  (make-rfo-minus-relfreqs (euclid (relfreqs rfo1) (relfreqs rfo2) omni-relfreqs) 
-					   [(make-rfo-minus-relfreqs (score rfo1) (rfos-or-file rfo1)) ;making a mock rfo here.  it lacks relfreqs but has the closure property (in the math/SICP sense) like all rfos
-					    (make-rfo-minus-relfreqs (score rfo2) (rfos-or-file rfo2))]))) 
+		  (make-rfo {:score (euclid (relfreqs rfo1) (relfreqs rfo2) omni-relfreqs) 
+			     :rfos-or-file [(make-rfo {:score (score rfo1) :rfos-or-file (rfos-or-file rfo1)}) ;making a mock rfo here.  it lacks relfreqs but has the closure property (in the math/SICP sense) like all rfos
+					    (make-rfo {:score (score rfo2) :rfos-or-file (rfos-or-file rfo2)})]}))) 
 
 (defn best-pairing [rfos omni-relfreqs]
   (let [combos (sort (fn [rfo1 rfo2] (compare (score rfo1) (score rfo2))) ; rfo1 and rfo2 are mock rfos, lacking relfreqs.  each represents a candidate pair - only the best scoring one will be made into a full rfo.
 		     (map  (partial score-pair omni-relfreqs) 
 			   (combinations rfos 2)))
 	best-pair (first combos)]
-    (make-rfo (score best-pair) (relative-freq best-pair) (rfos-or-file best-pair))))
+    (make-rfo {:score (score best-pair) :relfreqs (relative-freq best-pair) :rfos-or-file (rfos-or-file best-pair)})))
 
-(def docs-rfos (map #(make-rfo nil (words->relative-freq (file->seq %)) %) txt-files))
+(def docs-rfos (map #(make-rfo {:relfreqs (words->relative-freq (file->seq %)) :rfos-or-file %}) txt-files))
      
 (defn =rfos-ignore-relfreqs [rfo1 rfo2]
   (and (= (score rfo1) (score rfo2)) 
@@ -115,3 +115,9 @@
 
 
  
+
+(defn bar [{:keys [a b]}] (list a b))
+
+;(bar {:a 1})
+  
+;(bar {:a 1 :b 2})
