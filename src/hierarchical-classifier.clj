@@ -7,8 +7,10 @@
  
 ; somewhere in grep-able codespace i need to keep track of the idea that (file? o) is just (instance? java.io.File o).  This is good Java interop juju.
 
-(def DOC-COUNT 99)
-(def DOC-OFFSET 0)
+(def DOC-COUNT 3)
+(def DOC-OFFSET 0) 
+(def INTERESTING-FEATURES-COUNT 3) 
+
 (def directory-string "/Users/herdrick/Dropbox/blog/to-classify")
 (def all-txt-files (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File directory-string) 
 							       (into-array ["txt" "html"]) true)))
@@ -38,17 +40,22 @@
 					     {} docu)))))
 
 
-(def score first)
-(def relfreqs second)
-(def rfos-or-file  #(nth % 2))
 
 ;(defn make-rfo [score relfreqs rfos-or-file]
 ;  [score relfreqs rfos-or-file]) 
 
-(defn make-rfo [{:keys [score relfreqs rfos-or-file]}]
-  [score relfreqs rfos-or-file]) 
+(defn make-rfo [{:keys [score relfreqs interesting rfos-or-file]}]
+  [score relfreqs interesting rfos-or-file]) 
+
+(def score first)
+(def relfreqs second)
+(def interesting #(nth % 2))
+(def rfos-or-file  #(nth % 3))
+
 
 (def corpus-relfreq (words->relative-freq omni-doc)) 
+
+;ok, todo: need to make consistent again the relfreq relfreqs idea.  omni-relfreq included.
 
 (use '(incanter core stats)) ;need this only for abs and mean
 
@@ -65,28 +72,43 @@
 
 
 (def relative-freq (memoize (fn [rfo]
-			      (let [r-o-f (rfos-or-file rfo)]
+			      (let [r-o-f (rfos-or-file rfo)] ;r-o-f could be rfos or a file
 			      (if (instance? java.io.File r-o-f)
 				(words->relative-freq (file->seq r-o-f))
-				(do ;(println "combining...")
+				(do ;(println "combining...")  ;todo kill this logging
 				  (combine-relfreqs (relative-freq (first r-o-f)) 
 						    (relative-freq (second r-o-f)))))))))
+(defn interesting-features [relfreqs omni-relfreq count]
+  ;(map (fn [[word freq]]
+  ;	 (str (if (< 0 freq) "-" "") word))
+  (map (fn [[word freq]]
+  	 (str word " "(.substring (str freq) 0 6) ", "))
+       (take count (sort #(> (abs (second %)) (abs (second %2)))
+			 (map (fn [[word freq]]
+				[word (- freq (get omni-relfreq word))])
+			      relfreqs)))))
+
 
 (use 'clojure.contrib.combinatorics) ; sadly, combinations don't produce lazy seqs 
 
+;in the new pairings we create here, don't calculate interesting features - only the winning pair will have that done.
 (def score-pair (fn [omni-relfreqs [rfo1 rfo2]] ; todo: make this a defn
 		  (make-rfo {:score (euclid (relfreqs rfo1) (relfreqs rfo2) omni-relfreqs) 
-			     :rfos-or-file [(make-rfo {:score (score rfo1) :rfos-or-file (rfos-or-file rfo1)}) ;making a mock rfo here.  it lacks relfreqs but has the closure property (in the math/SICP sense) like all rfos
-					    (make-rfo {:score (score rfo2) :rfos-or-file (rfos-or-file rfo2)})]}))) 
+			     :rfos-or-file [(make-rfo {:score (score rfo1) :interesting (interesting rfo1) :rfos-or-file (rfos-or-file rfo1)}) ;making a mock rfo here.  it lacks relfreqs but has the closure property (in the math/SICP sense) like all rfos
+					    (make-rfo {:score (score rfo2) :interesting (interesting rfo2) :rfos-or-file (rfos-or-file rfo2)})]}))) 
 
 (defn best-pairing [rfos omni-relfreqs]
   (let [combos (sort (fn [rfo1 rfo2] (compare (score rfo1) (score rfo2))) ; rfo1 and rfo2 are mock rfos, lacking relfreqs.  each represents a candidate pair - only the best scoring one will be made into a full rfo.
 		     (map  (partial score-pair omni-relfreqs) 
 			   (combinations rfos 2)))
-	best-pair (first combos)]
-    (make-rfo {:score (score best-pair) :relfreqs (relative-freq best-pair) :rfos-or-file (rfos-or-file best-pair)})))
+	best-pair (first combos)
+	relfreqs (relative-freq best-pair)] 
+    (make-rfo {:score (score best-pair) :relfreqs relfreqs :interesting (interesting-features relfreqs omni-relfreqs INTERESTING-FEATURES-COUNT) :rfos-or-file (rfos-or-file best-pair)})))
 
-(def docs-rfos (map #(make-rfo {:relfreqs (words->relative-freq (file->seq %)) :rfos-or-file %}) txt-files))
+(def docs-rfos (map (fn [file]
+		      (let [relfreqs (words->relative-freq (file->seq file))]
+			(make-rfo {:relfreqs relfreqs :interesting (interesting-features relfreqs corpus-relfreq INTERESTING-FEATURES-COUNT) :rfos-or-file file}))) 
+		    txt-files))
      
 (defn =rfos-ignore-relfreqs [rfo1 rfo2]
   (and (= (score rfo1) (score rfo2)) 
@@ -108,16 +130,5 @@
 ;(.replace (node (first (foo docs-rfos corpus-relfreq))) directory-string "")
 
 (defn fprn [s]
-  (println s)
-  s)
+  (println s))
 
-
-
-
- 
-
-(defn bar [{:keys [a b]}] (list a b))
-
-;(bar {:a 1})
-  
-;(bar {:a 1 :b 2})

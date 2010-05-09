@@ -1,12 +1,13 @@
 (defn node [whatever]
   (defn leaf [rfo]
-    (str "{id: 'leafnode" (rand) "', name: '" (.replace (str (rfos-or-file rfo)) "'" "") "', data: {}, children: [] }"))
+    ;(println (interesting rfo))
+    (str "{id: 'leafnode" (rand) "', name: '" (apply str (drop-last 2 (apply str (interesting rfo))))  "', data: {} , children: [] }")) ; (.replace (str (rfos-or-file rfo)) "'" "") 
 
   (defn pair [rfo]
-    (str "{id: 'pairnode" (rand) 
-	 "', name: '" (score rfo)   
-	 "', data: {score: '" (score rfo)
-	 "'}, children: [" 
+    (str "{id: 'pairnode" (rand) "', name: '" 
+	 (apply str (drop-last 2 (apply str (interesting rfo)))) ; drop 2 chars at the end to kill tailing comma and space 
+	 "', data: {score: '" (score rfo) "'}" 
+	 " , children: [" 
 	 (node (first (rfos-or-file rfo))) 
 	 " , " 
 	 (node (second (rfos-or-file rfo))) "] }"))
@@ -14,3 +15,4 @@
   (if (instance? java.io.File (rfos-or-file whatever))
     (leaf whatever)
     (pair whatever)))
+
