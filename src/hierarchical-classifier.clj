@@ -59,7 +59,6 @@
 		       omni-relfreq))))
 
 
-;todo: FALSE COMMENT here is where the huge number of relfreq distances are created (in rel-freq-distances) and immediately reduced to a single number (in score)
 
 (defn combine-relfreqs [rf1 rf2]
   (merge-with #(mean [% %2]) rf1 rf2))  ; i'm just combining relfreqs taking their (unweighted) mean.  
@@ -106,7 +105,7 @@
       (foo (conj rfos-cleaned best-pairing-rfo) omni-relfreq))))
 
 ;here's how i'm calling this right now:
-;(.replace (node (rest (first (foo docs-rfos corpus-relfreq)))) directory-string "")
+;(.replace (node (first (foo docs-rfos corpus-relfreq))) directory-string "")
 
 (defn fprn [s]
   (println s)
