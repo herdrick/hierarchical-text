@@ -22,19 +22,10 @@ function init(){
 
 
     //init data
-    var json_good = {
-        id: "node02",
-        name: 'the, it, a',
-        data: {"ethan" : "herdrick","newcolor" : "#444444"},
-        children: [{
-            id: "node13",
-            name: "2.?",
-            data: {},
-            children: []}]};
-
-    //var json = {id: 'pairnode0.36679617549861065', name: '0.5505608733264988', data: {score: '0.5505608733264988'}, children: [{id: 'pairnode0.5702003671117492', name: '0.41202661849461425', data: {score: '0.41202661849461425'}, children: [{id: 'pairnode0.7761218513421033', name: '0.3508626860328792', data: {score: '0.3508626860328792'}, children: [{id: 'pairnode0.5481180008926875', name: '0.26009213571117396', data: {score: '0.26009213571117396'}, children: [{id: 'pairnode0.29990743125045505', name: '0.22319643681552884', data: {score: '0.22319643681552884'}, children: [{id: 'pairnode0.9514870084332815', name: '0.19200126455742422', data: {score: '0.19200126455742422'}, children: [{id: 'pairnode0.5208481693831897', name: '0.16678890325360068', data: {score: '0.16678890325360068'}, children: [{id: 'pairnode0.9384806268411826', name: '0.15141303075796425', data: {score: '0.15141303075796425'}, children: [{id: 'pairnode0.7036611173930658', name: '0.12930357273191254', data: {score: '0.12930357273191254'}, children: [{id: 'pairnode0.4906215723873192', name: '0.11877104233977248', data: {score: '0.11877104233977248'}, children: [{id: 'pairnode0.22609587833957046', name: '0.10211302032034605', data: {score: '0.10211302032034605'}, children: [{id: 'pairnode0.6012736641032961', name: '0.09254062955599512', data: {score: '0.09254062955599512'}, children: [{id: 'pairnode0.125653344786405', name: '0.09096172050362514', data: {score: '0.09096172050362514'}, children: [{id: 'leafnode0.04488448498589925', name: '/Chapter 6 of TLS has code problems.html', data: {}, children: [] } , {id: 'leafnode0.3171495324668834', name: '/Copy of index.html', data: {}, children: [] }] } , {id: 'leafnode0.666868698983156', name: '/Little schemer chapter 10.txt', data: {}, children: [] }] } , {id: 'leafnode0.7858225115773082', name: '/PCL vs. TLS.txt', data: {}, children: [] }] } , {id: 'leafnode0.7149115100599085', name: '/Lisp and Google.txt', data: {}, children: [] }] } , {id: 'pairnode0.13427787506175726', name: '0.08950545537727868', data: {score: '0.08950545537727868'}, children: [{id: 'leafnode0.8683557458567673', name: '/continuations.txt', data: {}, children: [] } , {id: 'leafnode0.9906455012184416', name: '/stray thoughts.txt', data: {}, children: [] }] }] } , {id: 'leafnode0.6149692641874451', name: '/thought on lisp and static typing.txt', data: {}, children: [] }] } , {id: 'leafnode0.1544503469908618', name: '/collectors continuations, and what you can do with them.txt', data: {}, children: [] }] } , {id: 'pairnode0.3536570335209247', name: '0.16575111185322336', data: {score: '0.16575111185322336'}, children: [{id: 'pairnode0.8535747908153011', name: '0.1435687194505838', data: {score: '0.1435687194505838'}, children: [{id: 'leafnode0.7755901693385262', name: '/emacs sucks.txt', data: {}, children: [] } , {id: 'leafnode0.951133669896502', name: '/Learning and ideas.txt', data: {}, children: [] }] } , {id: 'pairnode0.48090642424311836', name: '0.0', data: {score: '0.0'}, children: [{id: 'leafnode0.4190373072142639', name: '/loose thoughts copy.txt', data: {}, children: [] } , {id: 'leafnode0.537850465907369', name: '/loose thoughts.txt', data: {}, children: [] }] }] }] } , {id: 'pairnode0.3825554734745461', name: '0.14830520657443153', data: {score: '0.14830520657443153'}, children: [{id: 'leafnode0.4783510222660994', name: '/party archeology.html', data: {}, children: [] } , {id: 'leafnode0.7375106826180883', name: '/techcrunch party.html', data: {}, children: [] }] }] } , {id: 'pairnode0.5690823262044236', name: '0.20708244518464392', data: {score: '0.20708244518464392'}, children: [{id: 'pairnode0.9021420320861074', name: '0.17649624370469547', data: {score: '0.17649624370469547'}, children: [{id: 'leafnode0.6986636257795906', name: '/consitently decent.txt', data: {}, children: [] } , {id: 'leafnode0.045638121412371335', name: '/why hoop is now so much better to the eye.txt', data: {}, children: [] }] } , {id: 'leafnode0.8065694092407468', name: '/local eminence.txt', data: {}, children: [] }] }] } , {id: 'leafnode0.9444079801008632', name: '/littleschemer thoughts.txt', data: {}, children: [] }] } , {id: 'pairnode0.9524377091439677', name: '0.33421160680940654', data: {score: '0.33421160680940654'}, children: [{id: 'pairnode0.9680384416329891', name: '0.27561515420727967', data: {score: '0.27561515420727967'}, children: [{id: 'leafnode0.21878235519925704', name: '/evolution vs revolution paradox.txt', data: {}, children: [] } , {id: 'leafnode0.055395793352913336', name: '/On lisp.txt', data: {}, children: [] }] } , {id: 'leafnode0.06676966656460692', name: '/guitar.txt', data: {}, children: [] }] }] } , {id: 'leafnode0.5764130577051064', name: '/less is more in building software.txt', data: {}, children: [] }] };
+    var json_good = {id: 'pairnode0.7075078898513146', name: 'you 0.0441, col 0.0331, only 0.0220, passed 0.0220', data: {score: '0.17698753561297983'} , children: [{id: 'pairnode0.27975738822314156', name: 'choice 0.0159, taking 0.0159, public 0.0159, talk 0.0159', data: {score: '0.13849536649711813'} , children: [{id: 'leafnode0.242448180221989', name: 'code 0.0064, aexp 0.0059, the -0.005, numbered 0.0048 /Chapter 6 of TLS has code problems.html', data: {} , children: [] } , {id: 'leafnode0.9833299129018764', name: 'a 0.0234, software 0.0230, first 0.0230, is -0.018 /consitently decent.txt', data: {} , children: [] }] } , {id: 'leafnode0.8695425133492058', name: 'you 0.0441, the 0.0358, col 0.0331, is 0.0326 /collectors continuations, and what you can do with them.txt', data: {} , children: [] }] };
   
-    var json = {id: 'pairnode0.6194981379017408', name: 'you 0.0441, col 0.0331, only 0.0220, passed 0.0220', data: {score: '0.17698753561297983'} , children: [{id: 'pairnode0.158901013938341', name: 'choice 0.0159, taking 0.0159, public 0.0159, talk 0.0159', data: {score: '0.13849536649711813'} , children: [{id: 'leafnode0.4316195690191389', name: 'code 0.0064, aexp 0.0059, the -0.005, numbered 0.0048', data: {} , children: [] } , {id: 'leafnode0.5633527536078131', name: 'a 0.0234, software 0.0230, first 0.0230, is -0.018', data: {} , children: [] }] } , {id: 'leafnode0.4401730526776675', name: 'you 0.0441, the 0.0358, col 0.0331, is 0.0326', data: {} , children: [] }] }; 
+    //begin json data
+    var json ={id: 'pairnode0.3423691233705385', name: 'you 0.0316, col 0.0214', data: {score: '0.16253561835386157'} , children: [{id: 'pairnode0.4466604513735758', name: 'choice 0.0164, taking 0.0164', data: {score: '0.13849536649711813'} , children: [{id: 'leafnode0.8037548541941457', name: 'code 0.0151, aexp 0.0139 /Chapter 6 of TLS has code problems.html', data: {} , children: [] } , {id: 'leafnode0.28347516506144177', name: 'software 0.0240, a 0.0236 /consitently decent.txt', data: {} , children: [] }] } , {id: 'pairnode0.5018487508131988', name: 'you 0.0316, the 0.0243', data: {score: '0.12108294761835955'} , children: [{id: 'leafnode0.03598992725714234', name: 'is 0.0363, you 0.0319 /collectors continuations, and what you can do with them.txt', data: {} , children: [] } , {id: 'leafnode0.31303967962176205', name: 'you 0.0313, the 0.0210 /continuations.txt', data: {} , children: [] }] }] };//end json data
 
     //end
     var infovis = document.getElementById('infovis');
@@ -63,7 +54,7 @@ function init(){
         //set overridable=true for styling individual
         //nodes or edges
         Node: {
-            height: 20,
+            height: 51,
             width: 140,
             type: 'rectangle',
             color: '#aaa',
@@ -95,7 +86,7 @@ function init(){
             //set label styles
             var style = label.style;
             style.width = 140 + 'px';
-            style.height = 17 + 'px';            
+            style.height = 51 + 'px';            
             style.cursor = 'pointer';
             style.color = '#333';
             style.fontSize = '0.8em';
@@ -130,7 +121,7 @@ function init(){
 		    }
 		    else { // leaf node
 		      node.data.$color =  '#aaa';
-		      node.data.$height = 34;
+		      node.data.$height = 51;
 		    }
 		    //node.data.$color = ['#aaa', '#daa', '#daa', '#daa', '#400', '#500'][count]; 
 		    //node.data.$color = "#aaa";

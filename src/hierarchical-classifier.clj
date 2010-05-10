@@ -11,6 +11,11 @@
 (def DOC-OFFSET 0) 
 (def INTERESTING-FEATURES-COUNT 3) 
 
+
+
+
+;(def words (re-seq #"[a-z]+" (org.apache.commons.lang.StringUtils/lowerCase (slurp "/Users/herdrick/Dropbox/clojure/spell-check/big.words"))))
+
 (def directory-string "/Users/herdrick/Dropbox/blog/to-classify")
 (def all-txt-files (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File directory-string) 
 							       (into-array ["txt" "html"]) true)))
@@ -20,9 +25,12 @@
 (defn ->vector [o]
   (if (vector? o) o [o]))
 
+
+
 (defn file->seq [file]
   (re-seq #"[a-z]+" 
 	  (org.apache.commons.lang.StringUtils/lowerCase (slurp (.toString file)))))
+
  
 (def omni-doc (apply concat (map file->seq txt-files)))
  
@@ -131,4 +139,12 @@
 
 (defn fprn [s]
   (println s))
+
+(def infovis-js-file "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/visualize/Spacetree/example1.js")
+
+(defn bazz [o]
+  (clojure.contrib.duck-streams/spit infovis-js 
+				     (.replaceFirst (slurp infovis-js-file) 
+							       "(?s)var json =.*;//end json data" 
+							       (str "var json =" o ";//end json data"))))
 
