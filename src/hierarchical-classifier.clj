@@ -11,21 +11,21 @@
 (def DOC-OFFSET 0) 
 (def INTERESTING-FEATURES-COUNT 3) 
 
-;(def directory-string "/Users/herdrick/Dropbox/blog/to-classify")
-;(def all-txt-files (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File directory-string) 
+;(def *directory-string* "/Users/herdrick/Dropbox/blog/to-classify")
+;(def *all-txt-files* (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File directory-string) 
 ;							       (into-array ["txt" "html"]) true)))
-(def directory-string "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/sonnets/")
-(def all-txt-files (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File directory-string) nil true)))
+(def *directory-string* "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/sonnets/")
+(def *all-txt-files* (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File *directory-string*) nil true)))
 
-(def txt-files (take DOC-COUNT (drop DOC-OFFSET all-txt-files)))
+(def *txt-files* (take DOC-COUNT (drop DOC-OFFSET *all-txt-files*)))
 
 (defn file->seq [file]
   (re-seq #"[a-z]+" 
 	  (org.apache.commons.lang.StringUtils/lowerCase (slurp (.toString file)))))
  
-(def omni-doc (set (apply concat (map file->seq txt-files)))) 
-(def corpus-word-list (set omni-doc))
-(def large-standard-doc (file->seq (new java.io.File "/Users/herdrick/Dropbox/clojure/spell-check/big.words")))
+(def *omni-doc* (set (apply concat (map file->seq *txt-files*)))) 
+(def *corpus-word-list* (set omni-doc))
+(def *large-standard-doc* (file->seq (new java.io.File "/Users/herdrick/Dropbox/clojure/spell-check/big.words")))
 
 (defn freqs [words]
   (reduce (fn [freqs obj] 
@@ -48,7 +48,7 @@
 (def interesting #(nth % 2))
 (def rfos-or-file  #(nth % 3))
 
-(def standard-relfreq (words->relative-freq (concat omni-doc large-standard-doc))) ;repeated work, could opt this
+(def *standard-relfreq* (words->relative-freq (concat *omni-doc* *large-standard-doc*))) ;repeated work, could opt this
 
 ;ok, todo: need to make consistent again the relfreq relfreqs naming.  omni-relfreq included.
 ;todo: need to figure out how to import just a few things.  could have sworn i could just fully specify functions in libs in order to avoid an import or use statement...
@@ -113,15 +113,15 @@
       (foo (conj rfos-cleaned best-pairing-rfo) word-list omni-relfreq))))
 
 ;here's how i'm calling this right now:
-;(.replace (node (first (foo docs-rfos word-list corpus-relfreq))) directory-string "")
+;(.replace (node (first (foo *docs-rfos* *corpus-word-list* *standard-relfreq*))) *directory-string* "")
 ;(bazz (*1)
 
-(def docs-rfos (map (fn [file]
+(def *docs-rfos* (map (fn [file]
 		      (let [relfreqs (words->relative-freq (file->seq file))]
-			(make-rfo {:relfreqs relfreqs :interesting (interesting-features relfreqs standard-relfreq INTERESTING-FEATURES-COUNT) :rfos-or-file file}))) 
-		    txt-files))
+			(make-rfo {:relfreqs relfreqs :interesting (interesting-features relfreqs *standard-relfreq* INTERESTING-FEATURES-COUNT) :rfos-or-file file}))) 
+		    *txt-files*))
 
-(def infovis-js-file "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/visualize/Spacetree/example1.js")
+(def *infovis-js-file* "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/visualize/Spacetree/example1.js")
 
 ;(use  'clojure.contrib.duck-streams)
 (defn bazz [o]
