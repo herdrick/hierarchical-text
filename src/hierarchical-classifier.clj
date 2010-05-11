@@ -11,32 +11,25 @@
 (def DOC-OFFSET 0) 
 (def INTERESTING-FEATURES-COUNT 3) 
 
-;(def big-dictionary (re-seq #"[a-z]+" (org.apache.commons.lang.StringUtils/lowerCase (slurp "/Users/herdrick/Dropbox/clojure/spell-check/big.words"))))
-
 (def directory-string "/Users/herdrick/Dropbox/blog/to-classify")
 (def all-txt-files (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File directory-string) 
 							       (into-array ["txt" "html"]) true)))
-(def txt-files (take DOC-COUNT (drop DOC-OFFSET all-txt-files)))
 
-(defn ->vector [o]
-  (if (vector? o) o [o]))
+(def txt-files (take DOC-COUNT (drop DOC-OFFSET all-txt-files)))
 
 (defn file->seq [file]
   (re-seq #"[a-z]+" 
 	  (org.apache.commons.lang.StringUtils/lowerCase (slurp (.toString file)))))
  
-(def large-standard-doc (file->seq (new java.io.File "/Users/herdrick/Dropbox/clojure/spell-check/big.words")))
 (def omni-doc (set (apply concat (map file->seq txt-files)))) 
 (def corpus-word-list (set omni-doc))
+(def large-standard-doc (file->seq (new java.io.File "/Users/herdrick/Dropbox/clojure/spell-check/big.words")))
 
 (defn freqs [words]
   (reduce (fn [freqs obj] 
 	    (merge-with + freqs {obj 1})) 
 	  {} words))
 
-;(big-dictionary
-
-;takes a list of strings
 (def words->relative-freq (memoize (fn [docu] 
 				   (let [freqs (freqs docu)
 					 word-count (count docu)]
@@ -44,10 +37,6 @@
 					       (conj rel-freqs [key (/ (float (freqs key)) word-count)])) ;would be clearer as (merge rel-freqs {key (/ (float (freqs key)) word-count)})   maybe
 					     {} docu)))))
 
-
-
-;(defn make-rfo [score relfreqs rfos-or-file]
-;  [score relfreqs rfos-or-file]) 
 
 (defn make-rfo [{:keys [score relfreqs interesting rfos-or-file]}]
   [score relfreqs interesting rfos-or-file]) 
@@ -59,7 +48,8 @@
 
 (def standard-relfreq (words->relative-freq (concat omni-doc large-standard-doc))) ;repeated work, could opt this
 
-;ok, todo: need to make consistent again the relfreq relfreqs idea.  omni-relfreq included.
+;ok, todo: need to make consistent again the relfreq relfreqs naming.  omni-relfreq included.
+;todo: need to figure out how to import just a few things.  could have sworn i could just fully specify functions in libs in order to avoid an import or use statement...
 
 (use '(incanter core stats)) ;need this only for abs and mean
 
@@ -68,8 +58,6 @@
   (sqrt (reduce + (map (fn [word]
 			 (sq (abs (- (get relfreqs1 word 0) (get relfreqs2 word 0)))))
 		      word-list))))
-
-
 
 (defn combine-relfreqs [rf1 rf2]
   (merge-with #(mean [% %2]) rf1 rf2))  ; i'm just combining relfreqs taking their (unweighted) mean.  
@@ -83,15 +71,12 @@
 				  (combine-relfreqs (relative-freq (first r-o-f)) 
 						    (relative-freq (second r-o-f)))))))))
 (defn interesting-features [relfreqs omni-relfreq count]
-  ;(map (fn [[word freq]]
-  ;	 (str (if (< 0 freq) "-" "") word))
   (map (fn [[word freq]]
   	 (str word " "(.substring (str freq) 0 6) ", "))
        (take count (sort #(> (abs (second %)) (abs (second %2)))
 			 (map (fn [[word freq]]
 				[word (- freq (get omni-relfreq word))])
 			      relfreqs)))))
-
 
 (use 'clojure.contrib.combinatorics) ; sadly, combinations don't produce lazy seqs 
 
@@ -108,11 +93,6 @@
 	best-pair (first combos)
 	relfreqs (relative-freq best-pair)] 
     (make-rfo {:score (score best-pair) :relfreqs relfreqs :interesting (interesting-features relfreqs standard-relfreq INTERESTING-FEATURES-COUNT) :rfos-or-file (rfos-or-file best-pair)})))
-
-(def docs-rfos (map (fn [file]
-		      (let [relfreqs (words->relative-freq (file->seq file))]
-			(make-rfo {:relfreqs relfreqs :interesting (interesting-features relfreqs standard-relfreq INTERESTING-FEATURES-COUNT) :rfos-or-file file}))) 
-		    txt-files))
      
 (defn =rfos-ignore-relfreqs [rfo1 rfo2]
   (and (= (score rfo1) (score rfo2)) 
@@ -132,9 +112,12 @@
 
 ;here's how i'm calling this right now:
 ;(.replace (node (first (foo docs-rfos word-list corpus-relfreq))) directory-string "")
+;(bazz (*1)
 
-(defn fprn [s]
-  (println s))
+(def docs-rfos (map (fn [file]
+		      (let [relfreqs (words->relative-freq (file->seq file))]
+			(make-rfo {:relfreqs relfreqs :interesting (interesting-features relfreqs standard-relfreq INTERESTING-FEATURES-COUNT) :rfos-or-file file}))) 
+		    txt-files))
 
 (def infovis-js-file "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/visualize/Spacetree/example1.js")
 
@@ -142,6 +125,6 @@
 (defn bazz [o]
   (clojure.contrib.duck-streams/spit infovis-js-file 
 				     (.replaceFirst (slurp infovis-js-file) 
-							       "(?s)var json =.*;//end json data" 
+							       "(?s)var json =.*;//end json data"    ;note regex flag to ignore line terminators. needed on some platforms but not all. Java is WODE!
 							       (str "var json =" o ";//end json data"))))
 
