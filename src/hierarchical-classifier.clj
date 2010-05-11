@@ -24,7 +24,7 @@
 	  (org.apache.commons.lang.StringUtils/lowerCase (slurp (.toString file)))))
  
 (def *omni-doc* (set (apply concat (map file->seq *txt-files*)))) 
-(def *corpus-word-list* (set omni-doc))
+(def *corpus-word-list* (set *omni-doc*))
 (def *large-standard-doc* (file->seq (new java.io.File "/Users/herdrick/Dropbox/clojure/spell-check/big.words")))
 
 (defn freqs [words]
@@ -48,9 +48,11 @@
 (def interesting #(nth % 2))
 (def rfos-or-file  #(nth % 3))
 
-(def *standard-relfreq* (words->relative-freq (concat *omni-doc* *large-standard-doc*))) ;repeated work, could opt this
+;(def *standard-relfreq* (words->relative-freq (concat *omni-doc* *large-standard-doc*))) ;repeated work, could opt this  HA - didn't turn out to be repeated anyway.
+(def *corpus-relfreq* (words->relative-freq *omni-doc*))
 
-;ok, todo: need to make consistent again the relfreq relfreqs naming.  omni-relfreq included.
+
+;ok, todo: need to make consistent again the relfreq relfreqs naming.  omni-relfreqss included.
 ;todo: need to figure out how to import just a few things.  could have sworn i could just fully specify functions in libs in order to avoid an import or use statement...
 
 (use '(incanter core stats)) ;need this only for abs and mean
@@ -88,13 +90,13 @@
 			     :rfos-or-file [(make-rfo {:score (score rfo1) :interesting (interesting rfo1) :rfos-or-file (rfos-or-file rfo1)}) ;making a mock rfo here.  it lacks relfreqs but has the closure property (in the math/SICP sense) like all rfos
 					    (make-rfo {:score (score rfo2) :interesting (interesting rfo2) :rfos-or-file (rfos-or-file rfo2)})]}))) 
 
-(defn best-pairing [rfos word-list standard-relfreq]
+(defn best-pairing [rfos word-list omni-relfreq]
   (let [combos (sort (fn [rfo1 rfo2] (compare (score rfo1) (score rfo2))) ; rfo1 and rfo2 are mock rfos, lacking relfreqs.  each represents a candidate pair - only the best scoring one will be made into a full rfo.
 		     (map  (partial score-pair word-list) 
 			   (combinations rfos 2)))
 	best-pair (first combos)
 	relfreqs (relative-freq best-pair)] 
-    (make-rfo {:score (score best-pair) :relfreqs relfreqs :interesting (interesting-features relfreqs standard-relfreq INTERESTING-FEATURES-COUNT) :rfos-or-file (rfos-or-file best-pair)})))
+    (make-rfo {:score (score best-pair) :relfreqs relfreqs :interesting (interesting-features relfreqs omni-relfreq INTERESTING-FEATURES-COUNT) :rfos-or-file (rfos-or-file best-pair)})))
      
 (defn =rfos-ignore-relfreqs [rfo1 rfo2]
   (and (= (score rfo1) (score rfo2)) 
@@ -118,15 +120,15 @@
 
 (def *docs-rfos* (map (fn [file]
 		      (let [relfreqs (words->relative-freq (file->seq file))]
-			(make-rfo {:relfreqs relfreqs :interesting (interesting-features relfreqs *standard-relfreq* INTERESTING-FEATURES-COUNT) :rfos-or-file file}))) 
+			(make-rfo {:relfreqs relfreqs :interesting (interesting-features relfreqs *corpus-relfreq* INTERESTING-FEATURES-COUNT) :rfos-or-file file}))) 
 		    *txt-files*))
 
 (def *infovis-js-file* "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/visualize/Spacetree/example1.js")
 
 ;(use  'clojure.contrib.duck-streams)
 (defn bazz [o]
-  (clojure.contrib.duck-streams/spit infovis-js-file 
-				     (.replaceFirst (slurp infovis-js-file) 
+  (clojure.contrib.duck-streams/spit *infovis-js-file* 
+				     (.replaceFirst (slurp *infovis-js-file*) 
 							       "(?s)var json =.*;//end json data"    ;note regex flag to ignore line terminators. needed on some platforms but not all. Java is WODE!
 							       (str "var json =" o ";//end json data"))))
 
