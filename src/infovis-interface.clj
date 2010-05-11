@@ -1,7 +1,6 @@
 (defn node [whatever]
   (defn leaf [rfo]
-    ;(println (interesting rfo))
-    (str "{id: 'leafnode" (rand) "', name: '" (apply str (drop-last 2 (apply str (interesting rfo)))) ":" (.replace (str (rfos-or-file rfo)) "'" "") "', data: {} , children: [] }")) ; (.replace (str (rfos-or-file rfo)) "'" "") 
+    (str "{id: 'leafnode" (rand) "', name: '" (apply str (drop-last 2 (apply str (interesting rfo)))) ":" (.replace (str (rfos-or-file rfo)) "'" "") "', data: {} , children: [] }")) 
 
   (defn pair [rfo]
     (str "{id: 'pairnode" (rand) "', name: '" 

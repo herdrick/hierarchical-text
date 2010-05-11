@@ -72,7 +72,7 @@
 						    (relative-freq (second r-o-f)))))))))
 (defn interesting-features [relfreqs omni-relfreq count]
   (map (fn [[word freq]]
-  	 (str word " "(.substring (str freq) 0 6) ", "))
+  	 (str word " "(.substring (str freq) 0 6) ", ")) ;display first 6 chars of floating point number
        (take count (sort #(> (abs (second %)) (abs (second %2)))
 			 (map (fn [[word freq]]
 				[word (- freq (get omni-relfreq word))])
