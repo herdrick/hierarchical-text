@@ -25,7 +25,7 @@
  
 (def *omni-doc* (set (apply concat (map file->seq *txt-files*)))) 
 (def *corpus-word-list* (set *omni-doc*))
-(def *large-standard-doc* (file->seq (new java.io.File "/Users/herdrick/Dropbox/clojure/spell-check/big.words")))
+;(def *large-standard-doc* (file->seq (new java.io.File "/Users/herdrick/Dropbox/clojure/spell-check/big.words")))
 
 (defn freqs [words]
   (reduce (fn [freqs obj] 
@@ -49,7 +49,7 @@
 (def rfos-or-file  #(nth % 3))
 
 ;(def *standard-relfreq* (words->relative-freq (concat *omni-doc* *large-standard-doc*))) ;repeated work, could opt this  HA - didn't turn out to be repeated anyway.
-(def *corpus-relfreq* (words->relative-freq *omni-doc*))
+(def *corpus-relfreq* (words->relative-freq *omni-doc*)) 
 
 
 ;ok, todo: need to make consistent again the relfreq relfreqs naming.  omni-relfreqss included.
@@ -67,6 +67,7 @@
   (merge-with #(mean [% %2]) rf1 rf2))  ; i'm just combining relfreqs taking their (unweighted) mean.  
 
 
+;todo: change this name
 (def relative-freq (memoize (fn [rfo]
 			      (let [r-o-f (rfos-or-file rfo)] ;r-o-f could be rfos or a file
 			      (if (instance? java.io.File r-o-f)
@@ -84,10 +85,10 @@
 
 (use 'clojure.contrib.combinatorics) ; sadly, combinations don't produce lazy seqs 
 
-;in the new pairings we create here, don't calculate interesting features - only the winning pair will have that done.
+;in the new pairings we create here, don't calculate interesting features - only the winning pair will have that done. todo: actually it's doing that
 (def score-pair (fn [word-list [rfo1 rfo2]] ; todo: make this a defn
 		  (make-rfo {:score (euclid (relfreqs rfo1) (relfreqs rfo2) word-list) 
-			     :rfos-or-file [(make-rfo {:score (score rfo1) :interesting (interesting rfo1) :rfos-or-file (rfos-or-file rfo1)}) ;making a mock rfo here.  it lacks relfreqs but has the closure property (in the math/SICP sense) like all rfos
+			     :rfos-or-file [(make-rfo {:score (score rfo1) :interesting (interesting rfo1) :rfos-or-file (rfos-or-file rfo1)}) ;making a mock rfo here.  it lacks relfreqs but has the closure property (in the math/SICP sense) like all rfos.  it needs the interesting things, of course - don't want to throw those away.  
 					    (make-rfo {:score (score rfo2) :interesting (interesting rfo2) :rfos-or-file (rfos-or-file rfo2)})]}))) 
 
 (defn best-pairing [rfos word-list omni-relfreq]
