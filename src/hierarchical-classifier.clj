@@ -67,7 +67,7 @@
   (merge-with #(incanter.stats/mean [% %2]) rf1 rf2))  ; i'm just combining relfreqs taking their (unweighted) mean.  
 
 (def relative-freqs (memoize (fn [rfo]
-			      (let [r-o-f (rfos-or-file rfo)] ;r-o-f could be rfos or a file
+			      (let [r-o-f (rfos-or-file rfo)] 
 				(if (instance? java.io.File r-o-f)
 				  (words->relative-freq (file->seq r-o-f))
 				  (combine-relfreqs (relative-freqs (first r-o-f)) 
@@ -81,19 +81,19 @@
 				[word (- freq (get omni-relfreq word))])
 			      relfreqs)))))
 
-;(use 'clojure.contrib.combinatorics) ; sadly, combinations don't produce lazy seqs 
+;(use 'clojure.contrib.combinatorics) ;sadly, combinations don't produce lazy seqs 
 (ns user (:require clojure.contrib.combinatorics))
 
 ;in the new pairings we create here, don't calculate interesting features - only the winning pair will have that done.
 (defn score-pair [word-list [rfo1 rfo2]]
   (make-rfo {:score (euclid (relfreqs rfo1) (relfreqs rfo2) word-list) 
-	     :rfos-or-file [(make-rfo {:score (score rfo1) :interesting (interesting rfo1) :rfos-or-file (rfos-or-file rfo1)}) ;making a mock rfo here.  it lacks relfreqs but has the closure property (in the math/SICP sense) like all rfos.  it needs the interesting things, of course - don't want to throw those away.  
+	     :rfos-or-file [(make-rfo {:score (score rfo1) :interesting (interesting rfo1) :rfos-or-file (rfos-or-file rfo1)}) ;making a mock rfo here preserving the values of rfo1.  lacks: relfreqs
 			    (make-rfo {:score (score rfo2) :interesting (interesting rfo2) :rfos-or-file (rfos-or-file rfo2)})]})) 
 
 (defn best-pairing [rfos word-list omni-relfreq]
   (let [combos (sort (fn [rfo1 rfo2] (compare (score rfo1) (score rfo2))) ; rfo1 and rfo2 are mock rfos, lacking relfreqs.  each represents a candidate pair - only the best scoring one will be made into a full rfo.
-		     (map  (partial score-pair word-list) 
-			   (clojure.contrib.combinatorics/combinations rfos 2)))
+		     (map (partial score-pair word-list) 
+			  (clojure.contrib.combinatorics/combinations rfos 2)))
 	best-pair (first combos)
 	relfreqs (relative-freqs best-pair)] 
     (make-rfo {:score (score best-pair) :relfreqs relfreqs :interesting (interesting-features relfreqs omni-relfreq INTERESTING-FEATURES-COUNT) :rfos-or-file (rfos-or-file best-pair)})))
@@ -105,19 +105,19 @@
 ;(use 'clojure.walk)
 (ns user (:require clojure.walk))
 ;this is the recursive thing that... pretty much is the master function. 
-(defn foo [rfos word-list omni-relfreq]
-  (if (< (count rfos) 2) ; can't ever be 2, BTW.  3 choose 2 is 3, 2 choose 2 is 1. 
+(defn cluster [rfos word-list omni-relfreq]
+  (if (= (count rfos) 1) 
     (clojure.walk/postwalk-replace {(second (first rfos)) nil} rfos) ; this postwalk-replace (tree replace) is to axe the final matchup's relfreqs for readability
     (let [best-pairing-rfo (best-pairing rfos word-list omni-relfreq)
 	  rfos-cleaned (filter (complement (fn [rfo]
 					     (or (=rfos-ignore-relfreqs rfo (first (rfos-or-file best-pairing-rfo)))
 						 (=rfos-ignore-relfreqs rfo (second (rfos-or-file best-pairing-rfo))))))
 			       rfos)]
-      (foo (conj rfos-cleaned best-pairing-rfo) word-list omni-relfreq))))
+      (cluster (conj rfos-cleaned best-pairing-rfo) word-list omni-relfreq))))
 
 ;here's how i'm calling this right now:
-;(.replace (node (first (foo *docs-rfos* *corpus-word-list* *standard-relfreq*))) *directory-string* "")
-;(bazz (*1)
+;(.replace (node (first (cluster *docs-rfos* *corpus-word-list* *standard-relfreq*))) *directory-string* "")
+;(into-js-file (*1)
 
 (def *docs-rfos* (map (fn [file]
 		      (let [relfreqs (words->relative-freq (file->seq file))]
@@ -128,7 +128,7 @@
 
 (ns user (:require clojure.contrib.duck-streams))
 
-(defn bazz [o]
+(defn into-js-file [o]
   (clojure.contrib.duck-streams/spit *infovis-js-file* 
 				     (.replaceFirst (slurp *infovis-js-file*) 
 							       "(?s)var json =.*;//end json data"    ;note regex flag to ignore line terminators. needed on some platforms but not all. Java is WODE!
