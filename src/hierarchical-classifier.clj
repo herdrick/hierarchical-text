@@ -19,9 +19,9 @@
 
 (def *txt-files* (take DOC-COUNT (drop DOC-OFFSET *all-txt-files*)))
 
-(defn file->seq [file]
-  (re-seq #"[a-z]+" 
-	  (org.apache.commons.lang.StringUtils/lowerCase (slurp (.toString file)))))
+(def file->seq (memoize (fn [file]
+			  (re-seq #"[a-z]+" 
+				  (org.apache.commons.lang.StringUtils/lowerCase (slurp (.toString file)))))))
  
 (def *omni-doc* (set (apply concat (map file->seq *txt-files*)))) 
 (def *corpus-word-list* (set *omni-doc*))
@@ -33,11 +33,13 @@
 	  {} words))
 
 (def words->relative-freq (memoize (fn [docu] 
-				   (let [freqs (freqs docu)
-					 word-count (count docu)]
-				     (reduce (fn [rel-freqs key]
-					       (conj rel-freqs [key (/ (float (freqs key)) word-count)])) ;would be clearer as (merge rel-freqs {key (/ (float (freqs key)) word-count)})   maybe
-					     {} docu)))))
+				     (let [freqs (freqs docu)
+					   word-count (count docu)]
+				       (reduce (fn [rel-freqs key]
+						 (conj rel-freqs [key (/ (float (freqs key)) word-count)])) ;would be clearer as (merge rel-freqs {key (/ (float (freqs key)) word-count)})   maybe
+					       {} docu)))))
+
+
 
 
 (defn make-rfo [{:keys [score relfreqs interesting rfos-or-file]}]
@@ -56,7 +58,7 @@
 ;todo: need to figure out how to import just a few things.  could have sworn i could just fully specify functions in libs in order to avoid an import or use statement...
 
 (use '(incanter core stats)) ;need this only for abs and mean
-
+ 
 ;returns the euclidean distance between two documents
 (defn euclid [relfreqs1 relfreqs2 word-list]
   (sqrt (reduce + (map (fn [word]
@@ -70,11 +72,11 @@
 ;todo: change this name
 (def relative-freq (memoize (fn [rfo]
 			      (let [r-o-f (rfos-or-file rfo)] ;r-o-f could be rfos or a file
-			      (if (instance? java.io.File r-o-f)
-				(words->relative-freq (file->seq r-o-f))
-				(do ;(println "combining...")  ;todo kill this logging
+				(if (instance? java.io.File r-o-f)
+				  (words->relative-freq (file->seq r-o-f))
 				  (combine-relfreqs (relative-freq (first r-o-f)) 
-						    (relative-freq (second r-o-f)))))))))
+						    (relative-freq (second r-o-f))))))))
+
 (defn interesting-features [relfreqs omni-relfreq count]
   (map (fn [[word freq]]
   	 (str word " "(.substring (str freq) 0 6) ", ")) ;display first 6 chars of floating point number
@@ -85,11 +87,11 @@
 
 (use 'clojure.contrib.combinatorics) ; sadly, combinations don't produce lazy seqs 
 
-;in the new pairings we create here, don't calculate interesting features - only the winning pair will have that done. todo: actually it's doing that
-(def score-pair (fn [word-list [rfo1 rfo2]] ; todo: make this a defn
-		  (make-rfo {:score (euclid (relfreqs rfo1) (relfreqs rfo2) word-list) 
-			     :rfos-or-file [(make-rfo {:score (score rfo1) :interesting (interesting rfo1) :rfos-or-file (rfos-or-file rfo1)}) ;making a mock rfo here.  it lacks relfreqs but has the closure property (in the math/SICP sense) like all rfos.  it needs the interesting things, of course - don't want to throw those away.  
-					    (make-rfo {:score (score rfo2) :interesting (interesting rfo2) :rfos-or-file (rfos-or-file rfo2)})]}))) 
+;in the new pairings we create here, don't calculate interesting features - only the winning pair will have that done.
+(defn score-pair [word-list [rfo1 rfo2]]
+  (make-rfo {:score (euclid (relfreqs rfo1) (relfreqs rfo2) word-list) 
+	     :rfos-or-file [(make-rfo {:score (score rfo1) :interesting (interesting rfo1) :rfos-or-file (rfos-or-file rfo1)}) ;making a mock rfo here.  it lacks relfreqs but has the closure property (in the math/SICP sense) like all rfos.  it needs the interesting things, of course - don't want to throw those away.  
+			    (make-rfo {:score (score rfo2) :interesting (interesting rfo2) :rfos-or-file (rfos-or-file rfo2)})]})) 
 
 (defn best-pairing [rfos word-list omni-relfreq]
   (let [combos (sort (fn [rfo1 rfo2] (compare (score rfo1) (score rfo2))) ; rfo1 and rfo2 are mock rfos, lacking relfreqs.  each represents a candidate pair - only the best scoring one will be made into a full rfo.
