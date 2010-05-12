@@ -51,11 +51,7 @@
 (def rfos-or-file  #(nth % 3))
 
 ;(def *standard-relfreq* (words->relative-freq (concat *omni-doc* *large-standard-doc*))) ;repeated work, could opt this  HA - didn't turn out to be repeated anyway.
-(def *corpus-relfreq* (words->relative-freq *omni-doc*)) 
-
-
-;ok, todo: need to make consistent again the relfreq relfreqs naming.  omni-relfreqss included.
-;todo: need to figure out how to import just a few things.  could have sworn i could just fully specify functions in libs in order to avoid an import or use statement...
+(def *corpus-relfreqs* (words->relative-freq *omni-doc*)) 
 
 ;(use '(incanter core stats)) ;need this only for abs and mean 
 (ns user (:require incanter.core))
@@ -70,14 +66,12 @@
 (defn combine-relfreqs [rf1 rf2]
   (merge-with #(incanter.stats/mean [% %2]) rf1 rf2))  ; i'm just combining relfreqs taking their (unweighted) mean.  
 
-
-;todo: change this name
-(def relative-freq (memoize (fn [rfo]
+(def relative-freqs (memoize (fn [rfo]
 			      (let [r-o-f (rfos-or-file rfo)] ;r-o-f could be rfos or a file
 				(if (instance? java.io.File r-o-f)
 				  (words->relative-freq (file->seq r-o-f))
-				  (combine-relfreqs (relative-freq (first r-o-f)) 
-						    (relative-freq (second r-o-f))))))))
+				  (combine-relfreqs (relative-freqs (first r-o-f)) 
+						    (relative-freqs (second r-o-f))))))))
 
 (defn interesting-features [relfreqs omni-relfreq count]
   (map (fn [[word freq]]
@@ -101,9 +95,9 @@
 		     (map  (partial score-pair word-list) 
 			   (clojure.contrib.combinatorics/combinations rfos 2)))
 	best-pair (first combos)
-	relfreqs (relative-freq best-pair)] 
+	relfreqs (relative-freqs best-pair)] 
     (make-rfo {:score (score best-pair) :relfreqs relfreqs :interesting (interesting-features relfreqs omni-relfreq INTERESTING-FEATURES-COUNT) :rfos-or-file (rfos-or-file best-pair)})))
-     
+
 (defn =rfos-ignore-relfreqs [rfo1 rfo2]
   (and (= (score rfo1) (score rfo2)) 
        (= (rfos-or-file rfo1) (rfos-or-file rfo2))))
@@ -127,7 +121,7 @@
 
 (def *docs-rfos* (map (fn [file]
 		      (let [relfreqs (words->relative-freq (file->seq file))]
-			(make-rfo {:relfreqs relfreqs :interesting (interesting-features relfreqs *corpus-relfreq* INTERESTING-FEATURES-COUNT) :rfos-or-file file}))) 
+			(make-rfo {:relfreqs relfreqs :interesting (interesting-features relfreqs *corpus-relfreqs* INTERESTING-FEATURES-COUNT) :rfos-or-file file}))) 
 		    *txt-files*))
 
 (def *infovis-js-file* "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/visualize/Spacetree/example1.js")
@@ -140,11 +134,5 @@
 							       "(?s)var json =.*;//end json data"    ;note regex flag to ignore line terminators. needed on some platforms but not all. Java is WODE!
 							       (str "var json =" o ";//end json data"))))
 
-
-
 ;how i got those sonnets from their crappy format off that web page to where each is in it's own file:
 ;(map (fn [[filename text]] (spit (str "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/sonnets/" filename) text)) (partition 2 (filter (complement empty?) (map #(.trim %) (re-seq #"(?s).+?\n\s*?\n" (slurp "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/sonnets.txt"))))))
-;the problem that slowed me down (it took over 1 hour) here ended up being: 1) regex can be hard 2) the data was dirty (inconsistent)
-;lesson for #2: spend more time looking for a clean or already formatted as i want it (in files) version of the data.  
-
-
