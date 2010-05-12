@@ -57,16 +57,18 @@
 ;ok, todo: need to make consistent again the relfreq relfreqs naming.  omni-relfreqss included.
 ;todo: need to figure out how to import just a few things.  could have sworn i could just fully specify functions in libs in order to avoid an import or use statement...
 
-(use '(incanter core stats)) ;need this only for abs and mean
- 
+;(use '(incanter core stats)) ;need this only for abs and mean 
+(ns user (:require incanter.core))
+
 ;returns the euclidean distance between two documents
 (defn euclid [relfreqs1 relfreqs2 word-list]
-  (sqrt (reduce + (map (fn [word]
-			 (sq (abs (- (get relfreqs1 word 0) (get relfreqs2 word 0)))))
+  (incanter.core/sqrt (reduce + (map (fn [word]
+			 (incanter.core/sq (incanter.core/abs (- (get relfreqs1 word 0) (get relfreqs2 word 0)))))
 		      word-list))))
 
+(ns user (:require incanter.stats))
 (defn combine-relfreqs [rf1 rf2]
-  (merge-with #(mean [% %2]) rf1 rf2))  ; i'm just combining relfreqs taking their (unweighted) mean.  
+  (merge-with #(incanter.stats/mean [% %2]) rf1 rf2))  ; i'm just combining relfreqs taking their (unweighted) mean.  
 
 
 ;todo: change this name
@@ -80,12 +82,13 @@
 (defn interesting-features [relfreqs omni-relfreq count]
   (map (fn [[word freq]]
   	 (str word " "(.substring (str freq) 0 6) ", ")) ;display first 6 chars of floating point number
-       (take count (sort #(> (abs (second %)) (abs (second %2)))
+       (take count (sort #(> (incanter.core/abs (second %)) (incanter.core/abs (second %2)))
 			 (map (fn [[word freq]]
 				[word (- freq (get omni-relfreq word))])
 			      relfreqs)))))
 
-(use 'clojure.contrib.combinatorics) ; sadly, combinations don't produce lazy seqs 
+;(use 'clojure.contrib.combinatorics) ; sadly, combinations don't produce lazy seqs 
+(ns user (:require clojure.contrib.combinatorics))
 
 ;in the new pairings we create here, don't calculate interesting features - only the winning pair will have that done.
 (defn score-pair [word-list [rfo1 rfo2]]
@@ -96,7 +99,7 @@
 (defn best-pairing [rfos word-list omni-relfreq]
   (let [combos (sort (fn [rfo1 rfo2] (compare (score rfo1) (score rfo2))) ; rfo1 and rfo2 are mock rfos, lacking relfreqs.  each represents a candidate pair - only the best scoring one will be made into a full rfo.
 		     (map  (partial score-pair word-list) 
-			   (combinations rfos 2)))
+			   (clojure.contrib.combinatorics/combinations rfos 2)))
 	best-pair (first combos)
 	relfreqs (relative-freq best-pair)] 
     (make-rfo {:score (score best-pair) :relfreqs relfreqs :interesting (interesting-features relfreqs omni-relfreq INTERESTING-FEATURES-COUNT) :rfos-or-file (rfos-or-file best-pair)})))
@@ -105,11 +108,12 @@
   (and (= (score rfo1) (score rfo2)) 
        (= (rfos-or-file rfo1) (rfos-or-file rfo2))))
 	    
-(use 'clojure.walk)
+;(use 'clojure.walk)
+(ns user (:require clojure.walk))
 ;this is the recursive thing that... pretty much is the master function. 
 (defn foo [rfos word-list omni-relfreq]
   (if (< (count rfos) 2) ; can't ever be 2, BTW.  3 choose 2 is 3, 2 choose 2 is 1. 
-    (postwalk-replace {(second (first rfos)) nil} rfos) ; this postwalk-replace (tree replace) is to axe the final matchup's relfreqs for readability
+    (clojure.walk/postwalk-replace {(second (first rfos)) nil} rfos) ; this postwalk-replace (tree replace) is to axe the final matchup's relfreqs for readability
     (let [best-pairing-rfo (best-pairing rfos word-list omni-relfreq)
 	  rfos-cleaned (filter (complement (fn [rfo]
 					     (or (=rfos-ignore-relfreqs rfo (first (rfos-or-file best-pairing-rfo)))
@@ -128,7 +132,8 @@
 
 (def *infovis-js-file* "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/visualize/Spacetree/example1.js")
 
-;(use  'clojure.contrib.duck-streams)
+(ns user (:require clojure.contrib.duck-streams))
+
 (defn bazz [o]
   (clojure.contrib.duck-streams/spit *infovis-js-file* 
 				     (.replaceFirst (slurp *infovis-js-file*) 
@@ -141,3 +146,5 @@
 ;(map (fn [[filename text]] (spit (str "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/sonnets/" filename) text)) (partition 2 (filter (complement empty?) (map #(.trim %) (re-seq #"(?s).+?\n\s*?\n" (slurp "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/sonnets.txt"))))))
 ;the problem that slowed me down (it took over 1 hour) here ended up being: 1) regex can be hard 2) the data was dirty (inconsistent)
 ;lesson for #2: spend more time looking for a clean or already formatted as i want it (in files) version of the data.  
+
+
