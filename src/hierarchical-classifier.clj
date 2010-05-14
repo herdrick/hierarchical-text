@@ -7,16 +7,19 @@
  
 ; somewhere in grep-able codespace i need to keep track of the idea that (file? o) is just (instance? java.io.File o).  This is good Java interop juju.
 
+;(use '(incanter core stats)) ;need this only for abs and mean 
+(ns user (:require incanter.core))
+(ns user (:require incanter.stats))
+(ns user (:require clojure.contrib.combinatorics)) ;sadly, combinations doesn't produce lazy seqs 
+
 (def DOC-COUNT 8)
 (def DOC-OFFSET 0) 
-(def INTERESTING-FEATURES-COUNT 3) 
 
 ;(def *directory-string* "/Users/herdrick/Dropbox/blog/to-classify")
 ;(def *all-txt-files* (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File directory-string) 
 ;							       (into-array ["txt" "html"]) true)))
 (def *directory-string* "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/sonnets/")
 (def *all-txt-files* (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File *directory-string*) nil true)))
-
 (def *txt-files* (take DOC-COUNT (drop DOC-OFFSET *all-txt-files*)))
 
 (def file->seq (memoize (fn [file]
@@ -53,8 +56,6 @@
 ;(def *standard-relfreq* (words->relative-freq (concat *omni-doc* *large-standard-doc*))) ;repeated work, could opt this  HA - didn't turn out to be repeated anyway.
 (def *corpus-relfreqs* (words->relative-freq *omni-doc*)) 
 
-;(use '(incanter core stats)) ;need this only for abs and mean 
-(ns user (:require incanter.core))
 
 ;returns the euclidean distance between two documents
 (defn euclid [relfreqs1 relfreqs2 word-list]
@@ -62,7 +63,6 @@
 			 (incanter.core/sq (incanter.core/abs (- (get relfreqs1 word 0) (get relfreqs2 word 0)))))
 		      word-list))))
 
-(ns user (:require incanter.stats))
 (defn combine-relfreqs [rf1 rf2]
   (merge-with #(incanter.stats/mean [% %2]) rf1 rf2))  ; i'm just combining relfreqs taking their (unweighted) mean.  
 
@@ -74,15 +74,13 @@
 						    (relative-freqs (second r-o-f))))))))
 
 (defn interesting-features [relfreqs omni-relfreq count]
+  (def INTERESTING-FEATURES-COUNT 3) 
   (map (fn [[word freq]]
   	 (str word " "(.substring (str freq) 0 6) ", ")) ;display first 6 chars of floating point number
        (take count (sort #(> (incanter.core/abs (second %)) (incanter.core/abs (second %2)))
 			 (map (fn [[word freq]]
 				[word (- freq (get omni-relfreq word))])
 			      relfreqs)))))
-
-;(use 'clojure.contrib.combinatorics) ;sadly, combinations don't produce lazy seqs 
-(ns user (:require clojure.contrib.combinatorics))
 
 ;in the new pairings we create here, don't calculate interesting features - only the winning pair will have that done.
 (defn score-pair [word-list [rfo1 rfo2]]
@@ -107,7 +105,7 @@
 ;this is the recursive thing that... pretty much is the master function. 
 (defn cluster [rfos word-list omni-relfreq]
   (if (= (count rfos) 1) 
-    (clojure.walk/postwalk-replace {(second (first rfos)) nil} rfos) ; this postwalk-replace (tree replace) is to axe the final matchup's relfreqs for readability
+    (clojure.walk/postwalk-replace {(second (first rfos)) nil} rfos) ; this postwalk-replace (tree replace) is to axe the final matchup's relfreqs for readability TODO: change to making a mock rfo?
     (let [best-pairing-rfo (best-pairing rfos word-list omni-relfreq)
 	  rfos-cleaned (filter (complement (fn [rfo]
 					     (or (=rfos-ignore-relfreqs rfo (first (rfos-or-file best-pairing-rfo)))
