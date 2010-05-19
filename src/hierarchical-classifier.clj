@@ -20,7 +20,7 @@
 ;							       (into-array ["txt" "html"]) true)))
 (def *directory-string* "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/sonnets/")
 (def *all-txt-files* (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File *directory-string*) nil true)))
-(def *txt-files* (take DOC-COUNT (drop DOC-OFFSET *all-txt-files*)))
+(def *txt-files* (take DOC-COUNT (drop DOC-OFFSET *all-txt-files*))) ;todo  maybe axe *all-text-files* and just do this inline
 
 (def file->seq (memoize (fn [file]
 			  (re-seq #"[a-z]+" 
@@ -73,8 +73,8 @@
 				  (combine-relfreqs (relative-freqs (first r-o-f)) 
 						    (relative-freqs (second r-o-f))))))))
 
-(defn interesting-features [relfreqs omni-relfreq count]
-  (def INTERESTING-FEATURES-COUNT 3) 
+(defn interesting-words [relfreqs omni-relfreq count]
+  (def INTERESTING-WORDS-COUNT 3) 
   (map (fn [[word freq]]
   	 (str word " "(.substring (str freq) 0 6) ", ")) ;display first 6 chars of floating point number
        (take count (sort #(> (incanter.core/abs (second %)) (incanter.core/abs (second %2)))
@@ -82,7 +82,7 @@
 				[word (- freq (get omni-relfreq word))])
 			      relfreqs)))))
 
-;in the new pairings we create here, don't calculate interesting features - only the winning pair will have that done.
+;in the new pairings we create here, don't calculate interesting words - only the winning pair will have that done.
 (defn score-pair [word-list [rfo1 rfo2]]
   (make-rfo {:score (euclid (relfreqs rfo1) (relfreqs rfo2) word-list) 
 	     :rfos-or-file [(make-rfo {:score (score rfo1) :interesting (interesting rfo1) :rfos-or-file (rfos-or-file rfo1)}) ;making a mock rfo here preserving the values of rfo1.  lacks: relfreqs
@@ -94,7 +94,7 @@
 			  (clojure.contrib.combinatorics/combinations rfos 2)))
 	best-pair (first combos)
 	relfreqs (relative-freqs best-pair)] 
-    (make-rfo {:score (score best-pair) :relfreqs relfreqs :interesting (interesting-features relfreqs omni-relfreq INTERESTING-FEATURES-COUNT) :rfos-or-file (rfos-or-file best-pair)})))
+    (make-rfo {:score (score best-pair) :relfreqs relfreqs :interesting (interesting-words relfreqs omni-relfreq INTERESTING-WORDS-COUNT) :rfos-or-file (rfos-or-file best-pair)})))
 
 (defn =rfos-ignore-relfreqs [rfo1 rfo2]
   (and (= (score rfo1) (score rfo2)) 
@@ -104,6 +104,7 @@
 (ns user (:require clojure.walk))
 ;this is the recursive thing that... pretty much is the master function. 
 (defn cluster [rfos word-list omni-relfreq]
+  (println "cluster")
   (if (= (count rfos) 1) 
     (clojure.walk/postwalk-replace {(second (first rfos)) nil} rfos) ; this postwalk-replace (tree replace) is to axe the final matchup's relfreqs for readability TODO: change to making a mock rfo?
     (let [best-pairing-rfo (best-pairing rfos word-list omni-relfreq)
@@ -119,7 +120,7 @@
 
 (def *docs-rfos* (map (fn [file]
 		      (let [relfreqs (words->relative-freq (file->seq file))]
-			(make-rfo {:relfreqs relfreqs :interesting (interesting-features relfreqs *corpus-relfreqs* INTERESTING-FEATURES-COUNT) :rfos-or-file file}))) 
+			(make-rfo {:relfreqs relfreqs :interesting (interesting-words relfreqs *corpus-relfreqs* INTERESTING-WORDS-COUNT) :rfos-or-file file}))) 
 		    *txt-files*))
 
 (def *infovis-js-file* "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/visualize/Spacetree/example1.js")
@@ -134,3 +135,6 @@
 
 ;how i got those sonnets from their crappy format off that web page to where each is in it's own file:
 ;(map (fn [[filename text]] (spit (str "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/sonnets/" filename) text)) (partition 2 (filter (complement empty?) (map #(.trim %) (re-seq #"(?s).+?\n\s*?\n" (slurp "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/sonnets.txt"))))))
+;
+;
+;
