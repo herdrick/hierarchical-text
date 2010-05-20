@@ -100,12 +100,9 @@
   (and (= (score rfo1) (score rfo2)) 
        (= (rfos-or-file rfo1) (rfos-or-file rfo2))))
 
-;(use 'clojure.walk)
-(ns user (:require clojure.walk))
 ;this is the recursive thing that... pretty much is the master function. 
 (defn cluster [rfos word-list omni-relfreq]
   (if (= (count rfos) 1) 
-    ;(clojure.walk/postwalk-replace {(second (first rfos)) nil} rfos) ; this postwalk-replace (tree replace) is to axe the final matchup's relfreqs for readability TODO: change to making a mock rfo?
     rfos
     (let [best-pairing-rfo (best-pairing rfos word-list omni-relfreq)
 	  rfos-cleaned (filter (complement (fn [rfo]
