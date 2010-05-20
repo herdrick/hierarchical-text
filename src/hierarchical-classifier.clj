@@ -14,7 +14,7 @@
 
 (def DOC-COUNT 8)
 (def DOC-OFFSET 0) 
-
+(def INTERESTING-WORDS-COUNT 3) 
 ;(def *directory-string* "/Users/herdrick/Dropbox/blog/to-classify")
 ;(def *all-txt-files* (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File directory-string) 
 ;							       (into-array ["txt" "html"]) true)))
@@ -74,7 +74,6 @@
 						    (relative-freqs (second r-o-f))))))))
 
 (defn interesting-words [relfreqs omni-relfreq count]
-  (def INTERESTING-WORDS-COUNT 3) 
   (map (fn [[word freq]]
   	 (str word " "(.substring (str freq) 0 6) ", ")) ;display first 6 chars of floating point number
        (take count (sort #(> (incanter.core/abs (second %)) (incanter.core/abs (second %2)))
@@ -94,19 +93,20 @@
 			  (clojure.contrib.combinatorics/combinations rfos 2)))
 	best-pair (first combos)
 	relfreqs (relative-freqs best-pair)] 
+    ;(println relfreqs)
     (make-rfo {:score (score best-pair) :relfreqs relfreqs :interesting (interesting-words relfreqs omni-relfreq INTERESTING-WORDS-COUNT) :rfos-or-file (rfos-or-file best-pair)})))
 
 (defn =rfos-ignore-relfreqs [rfo1 rfo2]
   (and (= (score rfo1) (score rfo2)) 
        (= (rfos-or-file rfo1) (rfos-or-file rfo2))))
-	    
+
 ;(use 'clojure.walk)
 (ns user (:require clojure.walk))
 ;this is the recursive thing that... pretty much is the master function. 
 (defn cluster [rfos word-list omni-relfreq]
-  (println "cluster")
   (if (= (count rfos) 1) 
-    (clojure.walk/postwalk-replace {(second (first rfos)) nil} rfos) ; this postwalk-replace (tree replace) is to axe the final matchup's relfreqs for readability TODO: change to making a mock rfo?
+    ;(clojure.walk/postwalk-replace {(second (first rfos)) nil} rfos) ; this postwalk-replace (tree replace) is to axe the final matchup's relfreqs for readability TODO: change to making a mock rfo?
+    rfos
     (let [best-pairing-rfo (best-pairing rfos word-list omni-relfreq)
 	  rfos-cleaned (filter (complement (fn [rfo]
 					     (or (=rfos-ignore-relfreqs rfo (first (rfos-or-file best-pairing-rfo)))
@@ -117,6 +117,7 @@
 ;here's how i'm calling this right now:
 ;(.replace (node (first (cluster *docs-rfos* *corpus-word-list* *standard-relfreq*))) *directory-string* "")
 ;(into-js-file (*1)
+;(map (fn [rfo] (filter (complement map?) rfo)) (cluster *docs-rfos* *corpus-word-list* *corpus-relfreq*))
 
 (def *docs-rfos* (map (fn [file]
 		      (let [relfreqs (words->relative-freq (file->seq file))]
