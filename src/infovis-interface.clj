@@ -1,9 +1,11 @@
 (defn node [whatever]
   (defn leaf [rfo]
-    (str "{id: 'leafnode" (rand) "', name: '" (apply str (drop-last 2 (apply str (interesting rfo)))) ":" (.replace (str (rfos-or-file rfo)) "'" "") "', data: {} , children: [] }")) 
+    (str "{id: 'document-node" (rand) "', name: '" 
+	 (apply str (drop-last 2 (apply str (interesting rfo))))  ; drop 2 chars at the end to kill tailing comma and space
+	 " : " (.replace (str (rfos-or-file rfo)) "'" "") "', data: {} , children: [] }")) 
 
   (defn pair [rfo]
-    (str "{id: 'pairnode" (rand) "', name: '" 
+    (str "{id: 'pairing-node" (rand) "', name: '" 
 	 (apply str (drop-last 2 (apply str (interesting rfo)))) ; drop 2 chars at the end to kill tailing comma and space 
 	 "', data: {score: '" (score rfo) "'}" 
 	 " , children: [" 
