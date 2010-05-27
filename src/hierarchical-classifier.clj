@@ -7,10 +7,10 @@
  
 ; somewhere in grep-able codespace i need to keep track of the idea that (file? o) is just (instance? java.io.File o).  This is good Java interop juju.
 
-;(use '(incanter core stats)) ;need this only for abs and mean 
-(ns user (:require incanter.core))
-(ns user (:require incanter.stats))
-(ns user (:require clojure.contrib.combinatorics)) ;sadly, combinations doesn't produce lazy seqs 
+;(use '(incanter core stats)) ;need this only for abs and mean
+(ns user (:use [incanter.core :only (abs)]
+	       [incanter.stats :only (mean)]
+	       [clojure.contrib.combinatorics :only (combinations)]))
 
 (def DOC-COUNT 8)
 (def DOC-OFFSET 0) 
@@ -60,11 +60,11 @@
 ;returns the euclidean distance between two documents
 (defn euclid [relfreqs1 relfreqs2 word-list]
   (incanter.core/sqrt (reduce + (map (fn [word]
-			 (incanter.core/sq (incanter.core/abs (- (get relfreqs1 word 0) (get relfreqs2 word 0)))))
+			 (incanter.core/sq (abs (- (get relfreqs1 word 0) (get relfreqs2 word 0)))))
 		      word-list))))
 
 (defn combine-relfreqs [rf1 rf2]
-  (merge-with #(incanter.stats/mean [% %2]) rf1 rf2))  ; i'm just combining relfreqs taking their (unweighted) mean.  
+  (merge-with #(mean [% %2]) rf1 rf2))  ; i'm just combining relfreqs taking their (unweighted) mean.  
 
 (def relative-freqs (memoize (fn [rfo]
 			      (let [r-o-f (rfos-or-file rfo)] 
@@ -76,7 +76,7 @@
 (defn interesting-words [relfreqs omni-relfreq count]
   (map (fn [[word freq]]
   	 (str word " "(.substring (str freq) 0 6) ", ")) ;display first 6 chars of floating point number
-       (take count (sort #(> (incanter.core/abs (second %)) (incanter.core/abs (second %2)))
+       (take count (sort #(> (abs (second %)) (abs (second %2)))
 			 (map (fn [[word freq]]
 				[word (- freq (get omni-relfreq word))])
 			      relfreqs)))))
@@ -90,7 +90,7 @@
 (defn best-pairing [rfos word-list omni-relfreq]
   (let [combos (sort (fn [rfo1 rfo2] (compare (score rfo1) (score rfo2))) ; rfo1 and rfo2 are mock rfos, lacking relfreqs.  each represents a candidate pair - only the best scoring one will be made into a full rfo.
 		     (map (partial score-pair word-list) 
-			  (clojure.contrib.combinatorics/combinations rfos 2)))
+			  (combinations rfos 2)))
 	best-pair (first combos)
 	relfreqs (relative-freqs best-pair)] 
     ;(println relfreqs)
