@@ -1,3 +1,4 @@
+(ns hc)
 (defn node [whatever]
   (defn leaf [rfo]
     (str "{id: 'document-node" (rand) "', name: '" 

@@ -78,11 +78,11 @@ function init(){
         //Use this method to add event handlers and styles to
         //your node.
 	onCreateLabel: function(label, node){
-            label.id = node.id;            
-            label.innerHTML = node.name;
-            label.onclick = function(){
-                st.onClick(node.id);
-            };
+	        label.id = node.id;            
+	        label.innerHTML = node.name + (node.data.score ? (" " + (node.data.score + "").substring(0,4)) : "");
+	        label.onclick = function(){
+	        st.onClick(node.id);
+        };
             //set label styles
             var style = label.style;
             style.width = 140 + 'px';
