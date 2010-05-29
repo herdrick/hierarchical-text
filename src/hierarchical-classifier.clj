@@ -77,10 +77,10 @@
 			      relfreqs)))))
 
 ;in the new pairings we create here, don't calculate interesting words - only the winning pair will have that done.
-(defn score-pair [word-list [rfo1 rfo2]]
-  (make-rfo {:score (euclid (relfreqs rfo1) (relfreqs rfo2) word-list) 
-	     :rfos-or-file [(make-rfo {:score (score rfo1) :interesting (interesting rfo1) :rfos-or-file (rfos-or-file rfo1)}) ;making a mock rfo here preserving the values of rfo1. lacks: relfreqs
-			    (make-rfo {:score (score rfo2) :interesting (interesting rfo2) :rfos-or-file (rfos-or-file rfo2)})]})) 
+(def score-pair (memoize (fn [word-list [rfo1 rfo2]]
+			   (make-rfo {:score (euclid (relfreqs rfo1) (relfreqs rfo2) word-list) 
+				      :rfos-or-file [(make-rfo {:score (score rfo1) :interesting (interesting rfo1) :rfos-or-file (rfos-or-file rfo1)}) ;making a mock rfo here preserving the values of rfo1. lacks: relfreqs
+						     (make-rfo {:score (score rfo2) :interesting (interesting rfo2) :rfos-or-file (rfos-or-file rfo2)})]})))) 
 
 (defn best-pairing [rfos word-list omni-relfreq]
   (let [combos (sort (fn [rfo1 rfo2] (compare (score rfo1) (score rfo2))) ; rfo1 and rfo2 are mock rfos, lacking relfreqs. each represents a candidate pair - only the best scoring one will be made into a full rfo.
