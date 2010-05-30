@@ -69,13 +69,10 @@
 						    (relative-freqs (second r-o-f))))))))
 
 (defn interesting-words [relfreqs omni-relfreq count]
-  (map (fn [[word freq]]
-  	 ;(str word " " (.substring (str freq) 0 6) ", ")) ;display first 6 chars of floating point number
-	 (str word " , " freq)) 
-       (take count (sort #(> (abs (second %)) (abs (second %2)))
-			 (map (fn [[word freq]]
-				[word (-  (or (get relfreqs word) 0) freq)])
-			      omni-relfreq)))))
+  (take count (sort #(> (abs (second %)) (abs (second %2)))
+		    (map (fn [[word freq]]
+			   [word (-  (or (get relfreqs word) 0) freq)])
+			 omni-relfreq))))
 
 ;in the new pairings we create here, don't calculate interesting words - only the winning pair will have that done.
 (def score-pair (memoize (fn [word-list [rfo1 rfo2]]
@@ -114,6 +111,8 @@
 ;(into-js-file (*1)
 ;(map (fn [rfo] (filter (complement map?) rfo)) (cluster *docs-rfos* *corpus-word-list* *corpus-relfreq*))
 
+;(def bazz-4 (cluster *docs-rfos* *corpus-word-list* *corpus-relfreqs*))
+;(.replace (node (first bazz-4)) *directory-string* "")
 
 
 ;how i got those sonnets from their crappy format off that web page to where each is in it's own file:
