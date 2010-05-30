@@ -28,14 +28,12 @@
 	    (merge-with + freqs {obj 1})) 
 	  {} words))
 
-(def words->relative-freq (memoize (fn [docu] 
+(def words->relative-freq (memoize (fn [docu]
 				     (let [freqs (freqs docu)
 					   word-count (count docu)]
 				       (reduce (fn [rel-freqs key]
 						 (conj rel-freqs [key (/ (float (freqs key)) word-count)])) ;would be clearer as (merge rel-freqs {key (/ (float (freqs key)) word-count)})   maybe
 					       {} docu)))))
-
-
 
 
 (defn make-rfo [{:keys [score relfreqs interesting rfos-or-file]}]
@@ -69,10 +67,11 @@
 						    (relative-freqs (second r-o-f))))))))
 
 (defn interesting-words [relfreqs omni-relfreq count]
-  (take count (sort #(> (abs (second %)) (abs (second %2)))
-		    (map (fn [[word freq]]
-			   [word (-  (or (get relfreqs word) 0) freq)])
-			 omni-relfreq))))
+  
+	(take count (sort #(> (abs (second %)) (abs (second %2)))
+			  (map (fn [[word freq]]
+				 [word (-  (or (get relfreqs word) 0) freq)])
+			       omni-relfreq))))
 
 ;in the new pairings we create here, don't calculate interesting words - only the winning pair will have that done.
 (def score-pair (memoize (fn [word-list [rfo1 rfo2]]
