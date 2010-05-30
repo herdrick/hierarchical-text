@@ -1,7 +1,7 @@
 <html>
   <head>
     <title>Dendrogram Layout</title>
-    <link type="text/css" rel="stylesheet" href="ex.css?3.3"/>
+    <link type="text/css" rel="stylesheet" href="ex.css?3.4"/>
     <script type="text/javascript" src="protovis-r3.2.js"></script>
     <script type="text/javascript" src="flare.js"></script>
     <style type="text/css">
@@ -26,19 +26,19 @@ var vis = new pv.Panel()
 
 var layout = vis.add(pv.Layout.Cluster)
     .nodes(pv.dom(flare)
-        .root("flare")
+        .root("")
         .sort(function(a, b) pv.naturalOrder(a.nodeName, b.nodeName))
         .nodes())
     .group(true)
     .orient("left");
 
 layout.link.add(pv.Line)
-    .strokeStyle("#ccc")
+    .strokeStyle("#dfdfe5")
     .lineWidth(1)
-    .antialias(false);
+    .antialias(true);
 
 layout.node.add(pv.Dot)
-    .fillStyle(function(n) n.firstChild ? "#aec7e8" : "#ff7f0e");
+    .fillStyle(function(n) n.firstChild ? "#c5ffc5" : "#ccccff");
 
 layout.label.add(pv.Label);
 
