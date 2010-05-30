@@ -5,10 +5,12 @@
 	 " : 1")) 
   (defn pair [rfo]
     (str "'"
-	 (apply str (drop-last 1 (apply str  ; drop 1 char at the end to kill tailing space
-					(map (fn [[word freq]]
-					       (str (.trim word) ":" (.substring (.replace (.trim (str freq)) "-" "#") 0 (if (.contains (str freq) "-") 6 5)) " "))  ;display first 6 chars of floating point number
-					     (interesting rfo)))))
+	 (apply str (.trim (apply str  
+				  (map (fn [[word freq]]
+					 (let [left-wrapper (if (< freq 0) "(" "")
+					       right-wrapper (if (< freq 0) ")" "")]
+					   (str left-wrapper (.trim word) right-wrapper " ")))
+				       (interesting rfo)))))
 	 "': {"   
 	 (node (first (rfos-or-file rfo))) 
 	 " , " 
