@@ -19,7 +19,7 @@
 			  (re-seq #"[a-z]+" 
 				  (org.apache.commons.lang.StringUtils/lowerCase (slurp (.toString file)))))))
  
-(def *omni-doc* (set (apply concat (map file->seq *txt-files*)))) 
+(def *omni-doc* (apply concat (map file->seq *txt-files*))) 
 (def *corpus-word-list* (set *omni-doc*))
 ;(def *large-standard-doc* (file->seq (new java.io.File "/Users/herdrick/Dropbox/clojure/spell-check/big.words")))
 
@@ -70,11 +70,12 @@
 
 (defn interesting-words [relfreqs omni-relfreq count]
   (map (fn [[word freq]]
-  	 (str word " "(.substring (str freq) 0 6) ", ")) ;display first 6 chars of floating point number
+  	 ;(str word " " (.substring (str freq) 0 6) ", ")) ;display first 6 chars of floating point number
+	 (str word " , " freq)) 
        (take count (sort #(> (abs (second %)) (abs (second %2)))
 			 (map (fn [[word freq]]
-				[word (- freq (get omni-relfreq word))])
-			      relfreqs)))))
+				[word (-  (or (get relfreqs word) 0) freq)])
+			      omni-relfreq)))))
 
 ;in the new pairings we create here, don't calculate interesting words - only the winning pair will have that done.
 (def score-pair (memoize (fn [word-list [rfo1 rfo2]]
