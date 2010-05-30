@@ -5,8 +5,9 @@
 	 " : 1")) 
   (defn pair [rfo]
     (str "'"
-	 (apply str (drop-last 2 (apply str  ; drop 2 chars at the end to kill tailing space
-					(map (fn [[word freq]] (str word ":" (.substring (.replace (str freq) "-" "#") 0 6) " "))  ;display first 6 chars of floating point number
+	 (apply str (drop-last 1 (apply str  ; drop 1 char at the end to kill tailing space
+					(map (fn [[word freq]]
+					       (str (.trim word) ":" (.substring (.replace (.trim (str freq)) "-" "#") 0 (if (.contains (str freq) "-") 6 5)) " "))  ;display first 6 chars of floating point number
 					     (interesting rfo)))))
 	 "': {"   
 	 (node (first (rfos-or-file rfo))) 
