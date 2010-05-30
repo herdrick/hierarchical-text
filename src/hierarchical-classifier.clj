@@ -115,13 +115,6 @@
 ;(map (fn [rfo] (filter (complement map?) rfo)) (cluster *docs-rfos* *corpus-word-list* *corpus-relfreq*))
 
 
-(def *infovis-js-file* "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/visualize/Spacetree/example1.js")
-
-(defn into-js-file [o]
-  (spit *infovis-js-file* 
-	(.replaceFirst (slurp *infovis-js-file*) 
-		       "(?s)var json =.*;//end json data"    ;note regex flag to ignore line terminators. needed on some platforms but not all. Java is WODE!
-		       (str "var json =" o ";//end json data"))))
 
 ;how i got those sonnets from their crappy format off that web page to where each is in it's own file:
 ;(map (fn [[filename text]] (spit (str "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/sonnets/" filename) text)) (partition 2 (filter (complement empty?) (map #(.trim %) (re-seq #"(?s).+?\n\s*?\n" (slurp "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/sonnets.txt"))))))

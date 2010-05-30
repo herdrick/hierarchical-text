@@ -14,3 +14,10 @@
     (leaf whatever)
     (pair whatever)))
 
+(def *protovis-json-file* "file:///Users/herdrick/Dropbox/clojure/hierarchical-classifier/visualize/protovis-3.2/flare.js")
+
+(defn write-protovis-file [o]
+  (spit *protovis-json-file* 
+	(str "var flare = {" o "};")))
+
+
