@@ -67,7 +67,7 @@
 						    (relative-freqs (second r-o-f))))))))
 
 (defn interesting-words [relfreqs omni-relfreq count]
-  
+
 	(take count (sort #(> (abs (second %)) (abs (second %2)))
 			  (map (fn [[word freq]]
 				 [word (-  (or (get relfreqs word) 0) freq)])
@@ -78,7 +78,7 @@
 			   (make-rfo {:score (euclid (relfreqs rfo1) (relfreqs rfo2) word-list) 
 				      :rfos-or-file [(make-rfo {:score (score rfo1) :interesting (interesting rfo1) :rfos-or-file (rfos-or-file rfo1)}) ;making a mock rfo here preserving the values of rfo1. lacks: relfreqs
 						     (make-rfo {:score (score rfo2) :interesting (interesting rfo2) :rfos-or-file (rfos-or-file rfo2)})]})))) 
-
+ 
 (defn best-pairing [rfos word-list omni-relfreq]
   (let [combos (sort (fn [rfo1 rfo2] (compare (score rfo1) (score rfo2))) ; rfo1 and rfo2 are mock rfos, lacking relfreqs. each represents a candidate pair - only the best scoring one will be made into a full rfo.
 		     (map (partial score-pair word-list) 
