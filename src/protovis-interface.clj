@@ -10,15 +10,15 @@
 					 (let [left-wrapper (if (< freq 0) "(" "")
 					       right-wrapper (if (< freq 0) ")" "")]
 					   (str left-wrapper (.trim word) right-wrapper " ")))
-				       (interesting rfo)))))
+				       (take *interesting-words-count* (interesting rfo))))))
 	 "': {"   
 	 (node (first (rfos-or-file rfo))) 
 	 " , " 
 	 (node (second (rfos-or-file rfo))) "}"))
-  
+   
   (if (instance? java.io.File (rfos-or-file whatever))
     (leaf whatever)
-    (pair whatever)))
+    (pair whatever))) 
 
 (def *protovis-json-file* "file:///Users/herdrick/Dropbox/clojure/hierarchical-classifier/visualize/protovis-3.2/flare.js")
 
