@@ -3,17 +3,22 @@
 	     [incanter.stats :only (mean)]
 	     [clojure.contrib.combinatorics :only (combinations)]))
 
-(def *interesting-words-count* 3) 
-(def *directory-string* "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/mixed")
-(def *txt-files* (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File *directory-string*) nil true)))
+
+
+(defn make-rfo [{:keys [score relfreqs interesting rfos-or-file]}]
+  [score relfreqs interesting rfos-or-file]) 
+(def score first)
+(def relfreqs second)
+(def interesting #(nth % 2))
+(def rfos-or-file  #(nth % 3))
+(defn rfo= [rfo1 rfo2]
+  (= (rfos-or-file rfo1) (rfos-or-file rfo2)))
+  
+(def *interesting-words-count* 3)
 
 (def file->seq (memoize (fn [file]
 			  (re-seq #"[a-z]+" 
 				  (org.apache.commons.lang.StringUtils/lowerCase (slurp (.toString file)))))))
- 
-(def *omni-doc* (apply concat (map file->seq *txt-files*))) 
-(def *corpus-word-list* (set *omni-doc*))
-;(def *large-standard-doc* (file->seq (new java.io.File "/Users/herdrick/Dropbox/clojure/spell-check/big.words")))
   
 (defn freqs [words]
   (reduce (fn [freqs obj] 
@@ -26,20 +31,6 @@
 				       (reduce (fn [rel-freqs key]
 						 (conj rel-freqs [key (/ (float (freqs key)) word-count)])) ;would be clearer as (merge rel-freqs {key (/ (float (freqs key)) word-count)})   maybe
 					       {} docu)))))
-
-
-(defn make-rfo [{:keys [score relfreqs interesting rfos-or-file]}]
-  [score relfreqs interesting rfos-or-file]) 
-
-(def score first)
-(def relfreqs second)
-(def interesting #(nth % 2))
-(def rfos-or-file  #(nth % 3))
-(defn rfo= [rfo1 rfo2]
-  (= (rfos-or-file rfo1) (rfos-or-file rfo2)))
-  
-;(def *standard-relfreq* (words->relative-freq (concat *omni-doc* *large-standard-doc*))) ;repeated work, could opt this  HA - didn't turn out to be repeated anyway.
-(def *corpus-relfreqs* (words->relative-freq *omni-doc*)) 
 
 
 ;euclidean distance
@@ -70,7 +61,7 @@
 						     (make-rfo {:score (score rfo2) :interesting (interesting rfo2) :rfos-or-file (rfos-or-file rfo2)})]})))) 
   
 (defn best-pairing [rfos word-list omni-relfreq]
-  (let [combos (sort (fn [rfo1 rfo2] (compare (score rfo1) (score rfo2))) ; rfo1 and rfo2 are mock rfos, lacking relfreqs. each represents a candidate pair - only the best scoring one will be made into a full rfo.
+  (let [combos (sort (fn [rfo1 rfo2] (compare (score rfo1) (score rfo2))) ; rfo1 and rfo2 are mock rfos, each representing a candidate pair. the best scoring one will be made into a full rfo.
 		     (map (partial score-pair word-list) 
 			  (combinations rfos 2)))
 	best-pair (first combos)
@@ -89,6 +80,15 @@
       (cluster (conj rfos-cleaned best-pairing-rfo) word-list omni-relfreq))))
  
 
+(def *directory-string* "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/mixed")
+
+(def *txt-files* (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File *directory-string*) nil true)))
+
+(def *omni-doc* (apply concat (map file->seq *txt-files*))) 
+
+(def *corpus-word-list* (set *omni-doc*))
+
+(def *corpus-relfreqs* (words->relative-freq *omni-doc*)) 
 
 (def *docs-rfos* (map (fn [file]
 		      (let [relfreqs (words->relative-freq (file->seq file))]
