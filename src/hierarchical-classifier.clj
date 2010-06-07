@@ -1,15 +1,7 @@
-;Ideas for doc comparisions:
-;counts hash
-;counts hash and TWC  YES NO!
-;porportions 
-;summation of all inverses of the Euclidian distances
-[["north-america" [:usa :miami]]] 
- 
 ; somewhere in grep-able codespace i need to keep track of the idea that (file? o) is just (instance? java.io.File o).  This is good Java interop juju.
- 
 (ns hc (:use [incanter.core :only (abs sq sqrt)]
-	       [incanter.stats :only (mean)]
-	       [clojure.contrib.combinatorics :only (combinations)]))
+	     [incanter.stats :only (mean)]
+	     [clojure.contrib.combinatorics :only (combinations)]))
 
 (def *interesting-words-count* 3) 
 (def *directory-string* "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/mixed")
@@ -22,7 +14,7 @@
 (def *omni-doc* (apply concat (map file->seq *txt-files*))) 
 (def *corpus-word-list* (set *omni-doc*))
 ;(def *large-standard-doc* (file->seq (new java.io.File "/Users/herdrick/Dropbox/clojure/spell-check/big.words")))
-
+  
 (defn freqs [words]
   (reduce (fn [freqs obj] 
 	    (merge-with + freqs {obj 1})) 
@@ -55,7 +47,7 @@
   (sqrt (reduce + (map (fn [word]
 			 (sq (abs (- (get relfreqs1 word 0) (get relfreqs2 word 0)))))
 		      word-list))))
-
+ 
 (defn combine-relfreqs [rf1 rf2]
   (merge-with #(mean [% %2]) rf1 rf2))  ; i'm just combining relfreqs taking their (unweighted) mean.  
 
@@ -65,31 +57,27 @@
 				  (words->relative-freq (file->seq r-o-f))
 				  (combine-relfreqs (relative-freqs (first r-o-f)) 
 						    (relative-freqs (second r-o-f))))))))
-
+ 
 (defn interesting-words [relfreqs omni-relfreq count]
-
 	(take count (sort #(> (abs (second %)) (abs (second %2)))
 			  (map (fn [[word freq]]
 				 [word (-  (or (get relfreqs word) 0) freq)])
 			       omni-relfreq))))
-
-;in the new pairings we create here, don't calculate interesting words - only the winning pair will have that done.
+ 
 (def score-pair (memoize (fn [word-list [rfo1 rfo2]]
 			   (make-rfo {:score (euclid (relfreqs rfo1) (relfreqs rfo2) word-list) 
 				      :rfos-or-file [(make-rfo {:score (score rfo1) :interesting (interesting rfo1) :rfos-or-file (rfos-or-file rfo1)}) ;making a mock rfo here preserving the values of rfo1. lacks: relfreqs
 						     (make-rfo {:score (score rfo2) :interesting (interesting rfo2) :rfos-or-file (rfos-or-file rfo2)})]})))) 
- 
+  
 (defn best-pairing [rfos word-list omni-relfreq]
   (let [combos (sort (fn [rfo1 rfo2] (compare (score rfo1) (score rfo2))) ; rfo1 and rfo2 are mock rfos, lacking relfreqs. each represents a candidate pair - only the best scoring one will be made into a full rfo.
 		     (map (partial score-pair word-list) 
 			  (combinations rfos 2)))
 	best-pair (first combos)
 	relfreqs (relative-freqs best-pair)] 
-    ;(println relfreqs)
     (make-rfo {:score (score best-pair) :relfreqs relfreqs :interesting (interesting-words relfreqs omni-relfreq *interesting-words-count*) :rfos-or-file (rfos-or-file best-pair)})))
 
-
-;this is the recursive thing that... pretty much is the master function. 
+;makes an agglomerative hierarchical cluster of the rfos.
 (defn cluster [rfos word-list omni-relfreq]
   (if (= (count rfos) 1) 
     rfos
@@ -99,20 +87,25 @@
 						 (rfo= rfo (second (rfos-or-file best-pairing-rfo))))))
 			       rfos)]
       (cluster (conj rfos-cleaned best-pairing-rfo) word-list omni-relfreq))))
+ 
 
 
 (def *docs-rfos* (map (fn [file]
 		      (let [relfreqs (words->relative-freq (file->seq file))]
 			(make-rfo {:relfreqs relfreqs :interesting (interesting-words relfreqs *corpus-relfreqs* *interesting-words-count*) :rfos-or-file file}))) 
 		    *txt-files*))
+
+
+
+
 ;here's how i'm calling this right now:
 ;(.replace (node (first (cluster *docs-rfos* *corpus-word-list* *standard-relfreq*))) *directory-string* "")
 ;(into-js-file (*1)
 ;(map (fn [rfo] (filter (complement map?) rfo)) (cluster *docs-rfos* *corpus-word-list* *corpus-relfreq*))
-
+ 
 ;(def bazz-4 (cluster *docs-rfos* *corpus-word-list* *corpus-relfreqs*))
 ;(.replace (node (first bazz-4)) *directory-string* "")
-
+  
 
 ;how i got those sonnets from their crappy format off that web page to where each is in it's own file:
 ;(map (fn [[filename text]] (spit (str "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/sonnets/" filename) text)) (partition 2 (filter (complement empty?) (map #(.trim %) (re-seq #"(?s).+?\n\s*?\n" (slurp "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/sonnets.txt"))))))
