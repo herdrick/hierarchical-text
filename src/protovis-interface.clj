@@ -10,7 +10,7 @@
 					 (let [left-wrapper (if (< freq 0) "(" "")
 					       right-wrapper (if (< freq 0) ")" "")]
 					   (str left-wrapper (.trim word) right-wrapper " ")))
-				       (take *interesting-words-count* (interesting rfo))))))
+				       (take *interesting-words-count* (interesting-words rfo))))))
 	 "': {"   
 	 (node (first (rfos-or-file rfo))) 
 	 " , " 

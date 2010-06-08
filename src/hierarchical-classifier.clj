@@ -3,13 +3,21 @@
 	     [incanter.stats :only (mean)]
 	     [clojure.contrib.combinatorics :only (combinations)]))
 
+(def *directory-string* "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/mixed")
+
+(def *txt-files* (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File *directory-string*) nil true)))
+
+(def *omni-doc* (apply concat (map file->seq *txt-files*))) 
+
+(def *corpus-word-list* (set *omni-doc*))
+
+(def *corpus-relfreqs* (words->relative-freq *omni-doc*)) 
 
 
 (defn make-rfo [{:keys [score relfreqs interesting rfos-or-file]}]
   [score relfreqs interesting rfos-or-file]) 
 (def score first)
 (def relfreqs second)
-(def interesting #(nth % 2))
 (def rfos-or-file  #(nth % 3))
 (defn rfo= [rfo1 rfo2]
   (= (rfos-or-file rfo1) (rfos-or-file rfo2)))
@@ -46,27 +54,29 @@
 			      (let [r-o-f (rfos-or-file rfo)] 
 				(if (instance? java.io.File r-o-f)
 				  (words->relative-freq (file->seq r-o-f))
-				  (combine-relfreqs (relative-freqs (first r-o-f)) 
-						    (relative-freqs (second r-o-f))))))))
+				  (if (= (count r-o-f) 2)
+				    (combine-relfreqs (relative-freqs (first r-o-f)) 
+						      (relative-freqs (second r-o-f)))
+				    (throw (new Error "this should be two rfos but isn't=" r-o-f))))))))
  
-(defn interesting-words [relfreqs omni-relfreq count]
-	(take count (sort #(> (abs (second %)) (abs (second %2)))
-			  (map (fn [[word freq]]
-				 [word (-  (or (get relfreqs word) 0) freq)])
-			       omni-relfreq))))
+(defn interesting-words [rfo]
+  (take *interesting-words-count* (sort #(> (abs (second %)) (abs (second %2)))
+					(map (fn [[word freq]]
+					       [word (- (or (get (relative-freqs rfo) word) 0) freq)])
+					     *corpus-relfreqs*))))
  
 (def score-pair (memoize (fn [word-list [rfo1 rfo2]]
 			   (make-rfo {:score (euclid (relfreqs rfo1) (relfreqs rfo2) word-list) 
-				      :rfos-or-file [(make-rfo {:score (score rfo1) :interesting (interesting rfo1) :rfos-or-file (rfos-or-file rfo1)}) ;making a mock rfo here preserving the values of rfo1. lacks: relfreqs
-						     (make-rfo {:score (score rfo2) :interesting (interesting rfo2) :rfos-or-file (rfos-or-file rfo2)})]})))) 
+				      :rfos-or-file [(make-rfo {:score (score rfo1) :rfos-or-file (rfos-or-file rfo1)}) ;making a mock rfo here preserving the values of rfo1. lacks: relfreqs, interesting-words
+						     (make-rfo {:score (score rfo2) :rfos-or-file (rfos-or-file rfo2)})]})))) 
   
 (defn best-pairing [rfos word-list omni-relfreq]
-  (let [combos (sort (fn [rfo1 rfo2] (compare (score rfo1) (score rfo2))) ; rfo1 and rfo2 are mock rfos, each representing a candidate pair. the best scoring one will be made into a full rfo.
+  (let [combo-rfos (sort (fn [rfo1 rfo2] (compare (score rfo1) (score rfo2))) ; rfo1 and rfo2 are mock rfos, each representing a candidate pair. the best scoring one will be made into a full rfo.
 		     (map (partial score-pair word-list) 
 			  (combinations rfos 2)))
-	best-pair (first combos)
+	best-pair (first combo-rfos)
 	relfreqs (relative-freqs best-pair)] 
-    (make-rfo {:score (score best-pair) :relfreqs relfreqs :interesting (interesting-words relfreqs omni-relfreq *interesting-words-count*) :rfos-or-file (rfos-or-file best-pair)})))
+    (make-rfo {:score (score best-pair) :relfreqs relfreqs :rfos-or-file (rfos-or-file best-pair)})))
 
 ;makes an agglomerative hierarchical cluster of the rfos.
 (defn cluster [rfos word-list omni-relfreq]
@@ -78,21 +88,12 @@
 						 (rfo= rfo (second (rfos-or-file best-pairing-rfo))))))
 			       rfos)]
       (cluster (conj rfos-cleaned best-pairing-rfo) word-list omni-relfreq))))
- 
 
-(def *directory-string* "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/mixed")
 
-(def *txt-files* (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File *directory-string*) nil true)))
-
-(def *omni-doc* (apply concat (map file->seq *txt-files*))) 
-
-(def *corpus-word-list* (set *omni-doc*))
-
-(def *corpus-relfreqs* (words->relative-freq *omni-doc*)) 
 
 (def *docs-rfos* (map (fn [file]
 		      (let [relfreqs (words->relative-freq (file->seq file))]
-			(make-rfo {:relfreqs relfreqs :interesting (interesting-words relfreqs *corpus-relfreqs* *interesting-words-count*) :rfos-or-file file}))) 
+			(make-rfo {:relfreqs relfreqs :rfos-or-file file}))) 
 		    *txt-files*))
 
 
