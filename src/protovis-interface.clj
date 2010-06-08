@@ -1,7 +1,7 @@
 (ns hc)
 (defn node [whatever]
   (defn leaf [rfo]
-    (str "'" (.replace (str (rfos-or-file rfo)) "'" "") "'"  
+    (str "'" (.replace (str rfo) "'" "") "'"  
 	 " : 1")) 
   (defn pair [rfo]
     (str "'"
@@ -12,11 +12,11 @@
 					   (str left-wrapper (.trim word) right-wrapper " ")))
 				       (take *interesting-words-count* (interesting-words rfo))))))
 	 "': {"   
-	 (node (first (rfos-or-file rfo))) 
+	 (node (first rfo))
 	 " , " 
-	 (node (second (rfos-or-file rfo))) "}"))
+	 (node (second rfo)) "}"))
    
-  (if (instance? java.io.File (rfos-or-file whatever))
+  (if (instance? java.io.File whatever)
     (leaf whatever)
     (pair whatever))) 
 

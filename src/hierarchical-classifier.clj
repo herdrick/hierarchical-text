@@ -3,29 +3,11 @@
 	     [incanter.stats :only (mean)]
 	     [clojure.contrib.combinatorics :only (combinations)]))
 
-(def *directory-string* "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/mixed")
-
-(def *txt-files* (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File *directory-string*) nil true)))
-
-(def *omni-doc* (apply concat (map file->seq *txt-files*))) 
-
-(def *corpus-word-list* (set *omni-doc*))
-
-(def *corpus-relfreqs* (words->relative-freq *omni-doc*)) 
-
-
-(defn make-rfo [{:keys [score relfreqs interesting rfos-or-file]}]
-  [score relfreqs interesting rfos-or-file]) 
-(def rfos-or-file  #(nth % 3))
-(defn rfo= [rfo1 rfo2]
-  (= (rfos-or-file rfo1) (rfos-or-file rfo2)))
-  
-(def *interesting-words-count* 3)
 
 (def file->seq (memoize (fn [file]
 			  (re-seq #"[a-z]+" 
 				  (org.apache.commons.lang.StringUtils/lowerCase (slurp (.toString file)))))))
-  
+
 (defn freqs [words]
   (reduce (fn [freqs obj] 
 	    (merge-with + freqs {obj 1})) 
@@ -38,6 +20,17 @@
 						 (conj rel-freqs [key (/ (float (freqs key)) word-count)])) ;would be clearer as (merge rel-freqs {key (/ (float (freqs key)) word-count)})   maybe
 					       {} docu)))))
 
+(def *directory-string* "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/mixed")
+
+(def *txt-files* (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File *directory-string*) nil true)))
+
+(def *omni-doc* (apply concat (map file->seq *txt-files*))) 
+
+(def *corpus-word-list* (set *omni-doc*))
+
+(def *corpus-relfreqs* (words->relative-freq *omni-doc*)) 
+
+(def *interesting-words-count* 3)
 
 ;euclidean distance
 (defn euclid [relfreqs1 relfreqs2 word-list]
@@ -48,61 +41,49 @@
 (defn combine-relfreqs [rf1 rf2]
   (merge-with #(mean [% %2]) rf1 rf2))  ; i'm just combining relfreqs taking their (unweighted) mean.  
 
-(def relative-freqs (memoize (fn [rfo]
-			      (let [r-o-f (rfos-or-file rfo)] 
-				(if (instance? java.io.File r-o-f)
-				  (words->relative-freq (file->seq r-o-f))
-				  (if (= (count r-o-f) 2)
-				    (combine-relfreqs (relative-freqs (first r-o-f)) 
-						      (relative-freqs (second r-o-f)))
-				    (throw (new Error "this should be two rfos but isn't=" r-o-f))))))))
+(def relative-freqs (memoize (fn [tree]
+			       (if (instance? java.io.File tree)
+				 (words->relative-freq (file->seq tree))
+				 (if (= (count tree) 2)
+				   (combine-relfreqs (relative-freqs (first tree)) 
+						     (relative-freqs (second tree)))
+				   (throw (new Error "this should be two trees but isn't=" tree)))))))
  
-(defn interesting-words [rfo]
+(defn interesting-words [tree]
   (take *interesting-words-count* (sort #(> (abs (second %)) (abs (second %2)))
 					(map (fn [[word freq]]
-					       [word (- (or (get (relative-freqs rfo) word) 0) freq)])
+					       [word (- (or (get (relative-freqs tree) word) 0) freq)])
 					     *corpus-relfreqs*))))
- 
-(def conceive-rfo (memoize (fn [word-list [rfo1 rfo2]]
-			   (make-rfo {:rfos-or-file [(make-rfo {:rfos-or-file (rfos-or-file rfo1)}) ;making a mock rfo here preserving the values of rfo1.
-						     (make-rfo {:rfos-or-file (rfos-or-file rfo2)})]})))) 
-  
-(defn best-pairing [rfos word-list omni-relfreq]
-  (let [combos (sort (fn [[first-rfo1 first-rfo2] [second-rfo1 second-rfo2]]
-			   (compare (euclid (relative-freqs first-rfo1) (relative-freqs first-rfo2) word-list)
-				    (euclid (relative-freqs second-rfo1) (relative-freqs second-rfo2) word-list)))							 
-			 (combinations rfos 2))
-	best-pair (first combos)
-	best-rfo (conceive-rfo word-list best-pair)]
-    (make-rfo {:rfos-or-file (rfos-or-file best-rfo)})))
+     
+(defn best-pairing [trees word-list omni-relfreq]
+  (let [combos (sort (fn [[first-tree1 first-tree2] [second-tree1 second-tree2]]
+			   (compare (euclid (relative-freqs first-tree1) (relative-freqs first-tree2) word-list)
+				    (euclid (relative-freqs second-tree1) (relative-freqs second-tree2) word-list)))							 
+			 (combinations trees 2))]
+    (first combos)))
 
-;makes an agglomerative hierarchical cluster of the rfos.
-(defn cluster [rfos word-list omni-relfreq]
-  (if (= (count rfos) 1) 
-    rfos
-    (let [best-pairing-rfo (best-pairing rfos word-list omni-relfreq)
-	  rfos-cleaned (filter (complement (fn [rfo]
-					     (or (rfo= rfo (first (rfos-or-file best-pairing-rfo)))
-						 (rfo= rfo (second (rfos-or-file best-pairing-rfo))))))
-			       rfos)]
-      (cluster (conj rfos-cleaned best-pairing-rfo) word-list omni-relfreq))))
-
-
-
-(def *docs-rfos* (map (fn [file]
-		      (let [relfreqs (words->relative-freq (file->seq file))]
-			(make-rfo {:relfreqs relfreqs :rfos-or-file file}))) 
-		    *txt-files*))
+;makes an agglomerative hierarchical cluster of the trees.
+(defn cluster [trees word-list omni-relfreq]
+  (if (= (count trees) 1) 
+    trees ;now it's only one tree
+    (let [best-pairing-tree (best-pairing trees word-list omni-relfreq)
+	  trees-cleaned (filter (complement (fn [tree]
+					     (or (= tree (first best-pairing-tree))
+						 (= tree (second best-pairing-tree)))))
+			       trees)]
+      (cluster (conj trees-cleaned best-pairing-tree) word-list omni-relfreq))))
 
 
 
 
 ;here's how i'm calling this right now:
-;(.replace (node (first (cluster *docs-rfos* *corpus-word-list* *standard-relfreq*))) *directory-string* "")
+;(def stage-gradual-10 (cluster *docs-rfos* *corpus-word-list* *corpus-relfreqs*))
+;(.replace (node (first stage-gradual-10)) *directory-string* "")
+;(.replace (node (first (cluster *docs-trees* *corpus-word-list* *standard-relfreq*))) *directory-string* "")
 ;(into-js-file (*1)
-;(map (fn [rfo] (filter (complement map?) rfo)) (cluster *docs-rfos* *corpus-word-list* *corpus-relfreq*))
+;(map (fn [tree] (filter (complement map?) tree)) (cluster *docs-trees* *corpus-word-list* *corpus-relfreq*))
  
-;(def bazz-4 (cluster *docs-rfos* *corpus-word-list* *corpus-relfreqs*))
+;(def bazz-4 (cluster *docs-trees* *corpus-word-list* *corpus-relfreqs*))
 ;(.replace (node (first bazz-4)) *directory-string* "")
   
 
