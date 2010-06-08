@@ -16,7 +16,6 @@
 
 (defn make-rfo [{:keys [score relfreqs interesting rfos-or-file]}]
   [score relfreqs interesting rfos-or-file]) 
-(def score first)
 (def relfreqs second)
 (def rfos-or-file  #(nth % 3))
 (defn rfo= [rfo1 rfo2]
@@ -65,18 +64,18 @@
 					       [word (- (or (get (relative-freqs rfo) word) 0) freq)])
 					     *corpus-relfreqs*))))
  
-(def score-pair (memoize (fn [word-list [rfo1 rfo2]]
-			   (make-rfo {:score (euclid (relfreqs rfo1) (relfreqs rfo2) word-list) 
-				      :rfos-or-file [(make-rfo {:score (score rfo1) :rfos-or-file (rfos-or-file rfo1)}) ;making a mock rfo here preserving the values of rfo1. lacks: relfreqs, interesting-words
-						     (make-rfo {:score (score rfo2) :rfos-or-file (rfos-or-file rfo2)})]})))) 
+(def conceive-rfo (memoize (fn [word-list [rfo1 rfo2]]
+			   (make-rfo {:rfos-or-file [(make-rfo {:rfos-or-file (rfos-or-file rfo1)}) ;making a mock rfo here preserving the values of rfo1. lacks: relfreqs, interesting-words
+						     (make-rfo {:rfos-or-file (rfos-or-file rfo2)})]})))) 
   
 (defn best-pairing [rfos word-list omni-relfreq]
-  (let [combo-rfos (sort (fn [rfo1 rfo2] (compare (score rfo1) (score rfo2))) ; rfo1 and rfo2 are mock rfos, each representing a candidate pair. the best scoring one will be made into a full rfo.
-		     (map (partial score-pair word-list) 
-			  (combinations rfos 2)))
-	best-pair (first combo-rfos)
-	relfreqs (relative-freqs best-pair)] 
-    (make-rfo {:score (score best-pair) :relfreqs relfreqs :rfos-or-file (rfos-or-file best-pair)})))
+  (let [combos (sort (fn [[first-rfo1 first-rfo2] [second-rfo1 second-rfo2]]
+			   (compare (euclid (relfreqs first-rfo1) (relfreqs first-rfo2) word-list)
+				    (euclid (relfreqs second-rfo1) (relfreqs second-rfo2) word-list)))							 
+			 (combinations rfos 2))
+	best-pair (first combos)
+	best-rfo (conceive-rfo word-list best-pair)]
+    (make-rfo {:relfreqs (relative-freqs best-rfo) :rfos-or-file (rfos-or-file best-rfo)})))
 
 ;makes an agglomerative hierarchical cluster of the rfos.
 (defn cluster [rfos word-list omni-relfreq]
