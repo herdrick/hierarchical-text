@@ -16,7 +16,6 @@
 
 (defn make-rfo [{:keys [score relfreqs interesting rfos-or-file]}]
   [score relfreqs interesting rfos-or-file]) 
-(def relfreqs second)
 (def rfos-or-file  #(nth % 3))
 (defn rfo= [rfo1 rfo2]
   (= (rfos-or-file rfo1) (rfos-or-file rfo2)))
@@ -65,17 +64,17 @@
 					     *corpus-relfreqs*))))
  
 (def conceive-rfo (memoize (fn [word-list [rfo1 rfo2]]
-			   (make-rfo {:rfos-or-file [(make-rfo {:rfos-or-file (rfos-or-file rfo1)}) ;making a mock rfo here preserving the values of rfo1. lacks: relfreqs, interesting-words
+			   (make-rfo {:rfos-or-file [(make-rfo {:rfos-or-file (rfos-or-file rfo1)}) ;making a mock rfo here preserving the values of rfo1.
 						     (make-rfo {:rfos-or-file (rfos-or-file rfo2)})]})))) 
   
 (defn best-pairing [rfos word-list omni-relfreq]
   (let [combos (sort (fn [[first-rfo1 first-rfo2] [second-rfo1 second-rfo2]]
-			   (compare (euclid (relfreqs first-rfo1) (relfreqs first-rfo2) word-list)
-				    (euclid (relfreqs second-rfo1) (relfreqs second-rfo2) word-list)))							 
+			   (compare (euclid (relative-freqs first-rfo1) (relative-freqs first-rfo2) word-list)
+				    (euclid (relative-freqs second-rfo1) (relative-freqs second-rfo2) word-list)))							 
 			 (combinations rfos 2))
 	best-pair (first combos)
 	best-rfo (conceive-rfo word-list best-pair)]
-    (make-rfo {:relfreqs (relative-freqs best-rfo) :rfos-or-file (rfos-or-file best-rfo)})))
+    (make-rfo {:rfos-or-file (rfos-or-file best-rfo)})))
 
 ;makes an agglomerative hierarchical cluster of the rfos.
 (defn cluster [rfos word-list omni-relfreq]
