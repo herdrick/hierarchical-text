@@ -3,10 +3,10 @@
 	     [incanter.stats :only (mean)]
 	     [clojure.contrib.combinatorics :only (combinations)]))
 
-
 (def file->seq (memoize (fn [file]
 			  (re-seq #"[a-z]+" 
 				  (org.apache.commons.lang.StringUtils/lowerCase (slurp (.toString file)))))))
+
 (defn freqs [words]
   (reduce (fn [freqs obj] 
 	    (merge-with + freqs {obj 1})) 
@@ -18,18 +18,6 @@
 				       (reduce (fn [rel-freqs key]
 						 (conj rel-freqs [key (/ (float (freqs key)) word-count)])) ;would be clearer as (merge rel-freqs {key (/ (float (freqs key)) word-count)})   maybe
 					       {} docu)))))
-
-(def *directory-string* "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/mixed")
-
-(def *txt-files* (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File *directory-string*) nil true)))
-
-(def *omni-doc* (apply concat (map file->seq *txt-files*))) 
-
-(def *corpus-word-list* (set *omni-doc*))
-
-(def *corpus-relfreqs* (words->relative-freq *omni-doc*)) 
-
-(def *interesting-words-count* 3)
 
 ;euclidean distance
 (defn euclid [relfreqs1 relfreqs2 word-list]
@@ -48,12 +36,12 @@
 						     (relative-freqs (second pof)))
 				   (throw (new Error "this should be two pofs but isn't=" pof)))))))
  
-(defn interesting-words [pof]
-  (take *interesting-words-count* (sort #(> (abs (second %)) (abs (second %2)))
-					(map (fn [[word freq]]
-					       [word (- (or (get (relative-freqs pof) word) 0) freq)])
-					     *corpus-relfreqs*))))
-     
+(defn interesting-words [pof baseline-relfreqs]
+  (sort #(> (abs (second %)) (abs (second %2)))
+	(map (fn [[word freq]]
+	       [word (- (or (get (relative-freqs pof) word) 0) freq)])
+	     baseline-relfreqs)))
+
 (defn best-pairing [pofs word-list omni-relfreq]
   (let [combos (sort (fn [[first-pof1 first-pof2] [second-pof1 second-pof2]]
 			   (compare (euclid (relative-freqs first-pof1) (relative-freqs first-pof2) word-list)
@@ -73,6 +61,12 @@
       (cluster (conj pofs-cleaned best-pairing-pof) word-list omni-relfreq))))
 
 
+(def *directory-string* "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/mixed")
+(def *txt-files* (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File *directory-string*) nil true)))
+(def *omni-doc* (apply concat (map file->seq *txt-files*))) 
+(def *corpus-word-list* (set *omni-doc*))
+(def *corpus-relfreqs* (words->relative-freq *omni-doc*)) 
+(def *interesting-words-count* 3)
 ;here's how i'm calling this right now:
 ;(def stage-gradual-10 (cluster *docs-rfos* *corpus-word-list* *corpus-relfreqs*))
 ;(.replace (node (first stage-gradual-10)) *directory-string* "")
