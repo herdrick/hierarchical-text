@@ -19,18 +19,6 @@
 				       (reduce (fn [rel-freqs key]
 						 (conj rel-freqs [key (/ (float (freqs key)) word-count)])) ;would be clearer as (merge rel-freqs {key (/ (float (freqs key)) word-count)})   maybe
 					       {} docu)))))
-
-(def *directory-string* "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/mixed")
-
-(def *txt-files* (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File *directory-string*) nil true)))
-
-(def *omni-doc* (apply concat (map file->seq *txt-files*))) 
-
-(def *corpus-word-list* (set *omni-doc*))
-
-(def *corpus-relfreqs* (words->relative-freq *omni-doc*)) 
-
-(def *interesting-words-count* 3)
  
 (defn combine-relfreqs [rf1 rf2]
   (mean [rf1 rf2]))  ; i'm just combining relfreqs taking their (unweighted) mean.  
@@ -49,11 +37,11 @@
 			 (sq (abs (- (relative-freq pof1 word) (relative-freq pof2 word)))))
 		       word-list))))
 
-(defn interesting-words [pof]
-  (take *interesting-words-count* (sort #(> (abs (second %)) (abs (second %2)))
-					(map (fn [[word freq]]
-					       [word (- (relative-freq pof word) freq)])
-					     *corpus-relfreqs*))))
+(defn interesting-words [pof omni-relfreq]
+  (sort #(> (abs (second %)) (abs (second %2)))
+	(map (fn [[word freq]]
+	       [word (- (relative-freq pof word) freq)])
+	     omni-relfreq)))
      
 (defn best-pairing [pofs word-list omni-relfreq]
   (let [combos (sort (fn [[first-pof1 first-pof2] [second-pof1 second-pof2]]
@@ -72,6 +60,14 @@
 					  (= % (second best-pairing-pof))))
 				pofs)]
       (cluster (conj pofs-cleaned best-pairing-pof) word-list omni-relfreq))))
+
+(def directory-string "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/mixed")
+(def txt-files (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File directory-string) nil true)))
+(def omni-doc (apply concat (map file->seq  txt-files ))) 
+(def corpus-word-list (set  omni-doc ))
+(def corpus-relfreqs (words->relative-freq  omni-doc )) 
+(def interesting-words-count 3)
+
 
 ;here's how i'm calling this right now:
 ;(def stage-gradual-10 (cluster *docs-rfos* *corpus-word-list* *corpus-relfreqs*))
