@@ -7,6 +7,7 @@
 (def file->seq (memoize (fn [file]
 			  (re-seq #"[a-z]+" 
 				  (org.apache.commons.lang.StringUtils/lowerCase (slurp (.toString file)))))))
+
 (defn freqs [words]
   (reduce (fn [freqs obj] 
 	    (merge-with + freqs {obj 1})) 
@@ -30,34 +31,34 @@
 (def *corpus-relfreqs* (words->relative-freq *omni-doc*)) 
 
 (def *interesting-words-count* 3)
-
-;euclidean distance
-(defn euclid [relfreqs1 relfreqs2 word-list]
-  (sqrt (reduce + (map (fn [word]
-			 (sq (abs (- (get relfreqs1 word 0) (get relfreqs2 word 0)))))
-		      word-list))))
  
 (defn combine-relfreqs [rf1 rf2]
-  (merge-with #(mean [% %2]) rf1 rf2))  ; i'm just combining relfreqs taking their (unweighted) mean.  
+  (mean [rf1 rf2]))  ; i'm just combining relfreqs taking their (unweighted) mean.  
 
-(def relative-freqs (memoize (fn [pof]
-			       (if (instance? java.io.File pof)
-				 (words->relative-freq (file->seq pof))
-				 (if (= (count pof) 2)
-				   (combine-relfreqs (relative-freqs (first pof)) 
-						     (relative-freqs (second pof)))
-				   (throw (new Error "this should be two pofs but isn't=" pof)))))))
- 
+(def relative-freq (memoize (fn [pof word]
+			      (if (instance? java.io.File pof)
+				(get (words->relative-freq (file->seq pof)) word 0)
+				(if (= (count pof) 2)
+				  (combine-relfreqs (relative-freq (first pof) word) 
+						    (relative-freq (second pof) word))
+				  (throw (new Error "this should be two pofs but isn't=" pof)))))))
+
+;euclidean distance
+(defn euclid [pof1 pof2 word-list]
+  (sqrt (reduce + (map (fn [word]
+			 (sq (abs (- (relative-freq pof1 word) (relative-freq pof2 word)))))
+		       word-list))))
+
 (defn interesting-words [pof]
   (take *interesting-words-count* (sort #(> (abs (second %)) (abs (second %2)))
 					(map (fn [[word freq]]
-					       [word (- (or (get (relative-freqs pof) word) 0) freq)])
+					       [word (- (relative-freq pof word) freq)])
 					     *corpus-relfreqs*))))
      
 (defn best-pairing [pofs word-list omni-relfreq]
   (let [combos (sort (fn [[first-pof1 first-pof2] [second-pof1 second-pof2]]
-			   (compare (euclid (relative-freqs first-pof1) (relative-freqs first-pof2) word-list)
-				    (euclid (relative-freqs second-pof1) (relative-freqs second-pof2) word-list)))							 
+			   (compare (euclid first-pof1 first-pof2 word-list)
+				    (euclid second-pof1 second-pof2 word-list)))							 
 			 (combinations pofs 2))]
     (first combos)))
 
@@ -71,7 +72,6 @@
 					  (= % (second best-pairing-pof))))
 				pofs)]
       (cluster (conj pofs-cleaned best-pairing-pof) word-list omni-relfreq))))
-
 
 ;here's how i'm calling this right now:
 ;(def stage-gradual-10 (cluster *docs-rfos* *corpus-word-list* *corpus-relfreqs*))
