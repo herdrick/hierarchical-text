@@ -63,11 +63,10 @@
 
 (def directory-string "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/mixed")
 (def txt-files (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File directory-string) nil true)))
-(def omni-doc (apply concat (map file->seq  txt-files ))) 
-(def corpus-word-list (set  omni-doc ))
-(def corpus-relfreqs (words->relative-freq  omni-doc )) 
+(def omni-doc (apply concat (map file->seq txt-files ))) 
+(def corpus-word-list (set omni-doc ))
+(def corpus-relfreqs (words->relative-freq omni-doc )) 
 (def interesting-words-count 3)
-
 
 ;here's how i'm calling this right now:
 ;(def stage-gradual-10 (cluster *docs-rfos* *corpus-word-list* *corpus-relfreqs*))
