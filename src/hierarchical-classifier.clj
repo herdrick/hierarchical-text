@@ -1,4 +1,3 @@
-; somewhere in grep-able codespace i need to keep track of the idea that (file? o) is just (instance? java.io.File o).  This is good Java interop juju.
 (ns user (:use [incanter.core :only (abs sq sqrt)]
 	     [incanter.stats :only (mean)]
 	     [clojure.contrib.combinatorics :only (combinations)]))
