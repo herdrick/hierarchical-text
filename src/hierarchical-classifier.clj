@@ -1,5 +1,5 @@
 ; somewhere in grep-able codespace i need to keep track of the idea that (file? o) is just (instance? java.io.File o).  This is good Java interop juju.
-(ns hc (:use [incanter.core :only (abs sq sqrt)]
+(ns user (:use [incanter.core :only (abs sq sqrt)]
 	     [incanter.stats :only (mean)]
 	     [clojure.contrib.combinatorics :only (combinations)]))
 
@@ -36,9 +36,9 @@
 	     (set-m (to-words all-files)))))
      
 (defn best-pairing [pofs word-list]
-  (first (sort (fn [[first-pof1 first-pof2] [second-pof1 second-pof2]]
-			   (compare (euclid first-pof1 first-pof2 word-list)
-				    (euclid second-pof1 second-pof2 word-list)))							 
+  (first (sort (fn [[pof-1-1 pof-1-2] [pof-2-1 pof-2-2]]
+			   (compare (euclid pof-1-1 pof-1-2 word-list)
+				    (euclid pof-2-1 pof-2-2 word-list)))							 
 			 (combinations pofs 2))))
 
 ; makes an agglomerative hierarchical cluster of the pofs.
@@ -52,20 +52,3 @@
 
 (def directory-string "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/mixed")
 (def txt-files (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File directory-string) nil true)))
-;(def omni-doc (apply concat (to-words txt-files)))
-;(def corpus-word-list (set omni-doc))
-;(def corpus-relfreqs (relative-freq-items omni-doc word))
-
-
-;here's how i'm calling this right now:
-;(def stage-gradual-10 (cluster *docs-rfos* *corpus-word-list* *corpus-relfreqs*))
-;(.replace (node (first stage-gradual-10)) *directory-string* "")
-;(.replace (node (first (cluster *docs-pofs* *corpus-word-list* *standard-relfreq*))) *directory-string* "")
-;(into-js-file (*1)
-;(map (fn [pof] (filter (complement map?) pof)) (cluster *docs-pofs* *corpus-word-list* *corpus-relfreq*))
- 
-;(def bazz-4 (cluster *docs-pofs* *corpus-word-list* *corpus-relfreqs*))
-;(.replace (node (first bazz-4)) *directory-string* "")  
-
-;how i got those sonnets from their crappy format off that web page to where each is in it's own file:
-					;(map (fn [[filename text]] (spit (str "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/sonnets/" filename) text)) (partition 2 (filter (complement empty?) (map #(.trim %) (re-seq #"(?s).+?\n\s*?\n" (slurp "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/sonnets.txt"))))))
