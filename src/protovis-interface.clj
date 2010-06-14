@@ -1,5 +1,5 @@
 (ns hc)
-(defn node [whatever interesting-word-count omni-relfreq]
+(defn node [whatever interesting-word-count all-files]
   (defn leaf [rfo]
     (str "'" (.replace (str rfo) "'" "") "'"  
 	 " : 1")) 
@@ -10,11 +10,11 @@
 					 (let [left-wrapper (if (< freq 0) "(" "")
 					       right-wrapper (if (< freq 0) ")" "")]
 					   (str left-wrapper (.trim word) right-wrapper " ")))
-				       (take interesting-words-count (interesting-words rfo omni-relfreq)))))) 
+				       (take interesting-words-count (interesting-words rfo all-files)))))) 
 	 "': {"   
-	 (node (first rfo) interesting-words-count omni-relfreq)
+	 (node (first rfo) interesting-words-count all-files)
 	 " , " 
-	 (node (second rfo) interesting-words-count omni-relfreq) "}"))
+	 (node (second rfo) interesting-words-count all-files) "}"))
    
   (if (instance? java.io.File whatever)
     (leaf whatever)
