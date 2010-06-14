@@ -12,13 +12,13 @@
 			 (cond (coll? file-or-files) (apply concat (map to-words file-or-files))
 			       true (re-seq #"[a-z]+" (org.apache.commons.lang.StringUtils/lowerCase (slurp (str file-or-files))))))))
 
-(def relative-freq-words (memoize (fn [pof word]
+(def relative-freq-file (memoize (fn [pof word]
 				     (/ (or (get (frequencies-m (to-words pof)) word) 0)
 					(count-m (to-words pof))))))
      
 (def relative-freq (memoize (fn [pof word]
 			      (if (instance? java.io.File pof)
-				(relative-freq-words pof word)
+				(relative-freq-file pof word)
 				(mean (vector (relative-freq (first pof) word)  ; combine frequencies by taking their unweighted mean.  
 					      (relative-freq (second pof) word)))))))
      
@@ -35,10 +35,10 @@
 		 (combinations pofs 2)))))
 
 ; makes an agglomerative hierarchical cluster of the pofs.
-; pof = pairing or file
+; pof = pairing or file.  pofs is a list of them.
 (defn cluster [pofs]
   (if (= (count pofs) 1) 
-    pofs ;now it's only one pof
+    pofs
     (cluster (conj (filter (complement #(some (set [%]) (best-pairing pofs)))
 			   pofs)
 		   (best-pairing pofs)))))
@@ -46,7 +46,7 @@
 (defn interesting-words [pof all-files]
   (sort #(> (abs (second %)) (abs (second %2)))
 	(map (fn [word]
-	       [word (- (relative-freq pof word) (relative-freq-words all-files word))])
+	       [word (- (relative-freq pof word) (relative-freq-file all-files word))])
 	     (set-m (to-words all-files)))))
 
 (def directory-string "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/mixed")
