@@ -15,7 +15,7 @@
   (/ (or (get (frequencies-m xs) x) 0)
      (count-m xs)))
 
-(defn combine-relfreqs (comp mean vector)) ; i'm just combining relfreqs taking their (unweighted) mean.  
+(def combine-relfreqs (comp mean vector)) ; i'm just combining relfreqs taking their (unweighted) mean.  
 
 (def relative-freq (memoize (fn [pof word]
 			      (if (instance? java.io.File pof)
