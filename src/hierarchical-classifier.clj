@@ -16,14 +16,12 @@
 				     (/ (or (get (frequencies-m (to-words pof)) word) 0)
 					(count-m (to-words pof))))))
      
-(def combine-relfreqs (comp mean vector)) ; i'm just combining relfreqs taking their (unweighted) mean.  
-
 (def relative-freq (memoize (fn [pof word]
 			      (if (instance? java.io.File pof)
-				(relative-freq-items (to-words pof) word)
-				(combine-relfreqs (relative-freq (first pof) word) 
-						  (relative-freq (second pof) word))))))
-
+				(relative-freq-words pof word)
+				(mean (vector (relative-freq (first pof) word)  ; combine frequencies by taking their unweighted mean.  
+					      (relative-freq (second pof) word)))))))
+     
 (defn euclidean [pof1 pof2 word-list]
   (sqrt (reduce + (map (fn [word]
 			 (sq (abs (- (relative-freq pof1 word) (relative-freq pof2 word)))))
