@@ -8,9 +8,9 @@
 (def set-m (memoize set))
 (def sort-m (memoize set))
 
-(def to-words (memoize (fn [x]
-			 (cond (coll? x) (apply concat (map to-words x))
-			       true (re-seq #"[a-z]+" (org.apache.commons.lang.StringUtils/lowerCase (slurp (.toString x))))))))
+(def to-words (memoize (fn [file-or-files]
+			 (cond (coll? file-or-files) (apply concat (map to-words file-or-files))
+			       true (re-seq #"[a-z]+" (org.apache.commons.lang.StringUtils/lowerCase (slurp (str file-or-files))))))))
 
 (def relative-freq-words (memoize (fn [pof word]
 				     (/ (or (get (frequencies-m (to-words pof)) word) 0)
