@@ -1,5 +1,5 @@
-(ns hc)
-(defn node [whatever interesting-word-count all-files]
+(ns user)
+(defn node [whatever interesting-words-count all-files]
   (defn leaf [rfo]
     (str "'" (.replace (str rfo) "'" "") "'"  
 	 " : 1")) 
