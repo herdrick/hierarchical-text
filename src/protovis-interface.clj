@@ -1,20 +1,20 @@
-(ns hc)
-(defn node [whatever interesting-words-count omni-relfreq]
-  (defn leaf [rfo]
-    (str "'" (.replace (str rfo) "'" "") "'"  
+(ns user)
+(defn node [whatever interesting-words-count all-files]
+  (defn leaf [pof]
+    (str "'" (.replace (str pof) "'" "") "'"  
 	 " : 1")) 
-  (defn pair [rfo]
+  (defn pair [pof]
     (str "'"
 	 (apply str (.trim (apply str  
 				  (map (fn [[word freq]]
 					 (let [left-wrapper (if (< freq 0) "(" "")
 					       right-wrapper (if (< freq 0) ")" "")]
 					   (str left-wrapper (.trim word) right-wrapper " ")))
-				       (take interesting-words-count (interesting-words rfo omni-relfreq))))))
+				       (take interesting-words-count (interesting-words pof all-files)))))) 
 	 "': {"   
-	 (node (first rfo) interesting-words-count omni-relfreq)
+	 (node (first pof) interesting-words-count all-files)
 	 " , " 
-	 (node (second rfo) interesting-words-count omni-relfreq) "}"))
+	 (node (second pof) interesting-words-count all-files) "}"))
    
   (if (instance? java.io.File whatever)
     (leaf whatever)
