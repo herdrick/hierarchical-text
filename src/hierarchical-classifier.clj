@@ -32,10 +32,11 @@
 				(combine-relative-freqs (relative-freq (first pof))  ; combine frequencies by taking their unweighted mean.  
 							(relative-freq (second pof)))))))
 
-(defn euclidean [pof1 pof2 word-list]
-  (sqrt (reduce + (map (fn [word]
-			 (sq (abs (- (or ((relative-freq pof1) word) 0) (or ((relative-freq pof2) word) 0)))))
-		       word-list))))
+(def euclidean (memoize (fn [pof1 pof2 word-list]
+			  (sqrt (reduce + (map (fn [word]
+						 (sq (abs (- (or ((relative-freq pof1) word) 0)
+							     (or ((relative-freq pof2) word) 0)))))
+					       word-list))))))
 
 (defn best-pairing [pofs corpus-relative-freqs]
    (let [word-list (keys corpus-relative-freqs)]
