@@ -3,6 +3,12 @@
 	     [clojure.contrib.combinatorics]
 	     [clojure.set]))
 
+(defn merge-general [f g m1 m2]
+  (let [m1-only (difference (set (keys m1)) (set (keys m2)))
+	m2-only (difference (set (keys m2)) (set (keys m1)))]
+    (merge (merge-with f m1 m2)
+	   (into {} (map (fn [k] [k (g (m1 k))]) m1-only))
+	   (into {} (map (fn [k] [k (g (m2 k))]) m2-only)))))
 
 (def to-words (memoize (fn [file-or-files]
 			 (cond (coll? file-or-files) (apply concat (map to-words file-or-files))
@@ -14,13 +20,6 @@
 				     (apply hash-map (flatten (map (fn [[word count]]
 								     [word (/ count words-in-freqs)])
 								   freqs)))))))
-
-(defn merge-general [f g m1 m2]
-  (let [m1-only (difference (set (keys m1)) (set (keys m2)))
-	m2-only (difference (set (keys m2)) (set (keys m1)))]
-    (merge (merge-with f m1 m2)
-	   (into {} (map (fn [k] [k (g (m1 k))]) m1-only))
-	   (into {} (map (fn [k] [k (g (m2 k))]) m2-only)))))
 
 (defn combine-relative-freqs [rf1 rf2]
   (merge-general (comp mean vector)
