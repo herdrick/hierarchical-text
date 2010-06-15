@@ -3,19 +3,17 @@
 	     [clojure.contrib.combinatorics]
 	     [clojure.set]))
 
-(def frequencies-m (memoize frequencies))
-(def count-m (memoize count))
-(def set-m (memoize set))
-(def sort-m (memoize set))
 
 (def to-words (memoize (fn [file-or-files]
 			 (cond (coll? file-or-files) (apply concat (map to-words file-or-files))
 			       true (re-seq #"[a-z]+" (org.apache.commons.lang.StringUtils/lowerCase (slurp (str file-or-files))))))))
 
 (def relative-freq-file (memoize (fn [pof]
-				   (apply hash-map (flatten (map (fn [[word count]]
-								   [word (/ count (count-m (frequencies-m (to-words pof))))])
-								 (frequencies-m (to-words pof))))))))
+				   (let [freqs (frequencies (to-words pof))
+					 words-in-freqs (count freqs)]
+				     (apply hash-map (flatten (map (fn [[word count]]
+								     [word (/ count words-in-freqs)])
+								   freqs)))))))
 
 (defn merge-general [f g m1 m2]
   (let [m1-only (difference (set (keys m1)) (set (keys m2)))
