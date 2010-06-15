@@ -49,9 +49,10 @@
   ([pofs corpus-relative-freqs] 
      (if (= (count pofs) 1)
        pofs
-       (cluster (conj (filter (complement #(some (set [%]) (best-pairing pofs corpus-relative-freqs)))
-			      pofs)
-		      (best-pairing pofs corpus-relative-freqs))))))
+       (let [best-pair (best-pairing pofs corpus-relative-freqs)]
+	 (cluster (conj (filter (complement #(some (set [%]) best-pair))
+				pofs)
+			best-pair))))))
 
 (defn interesting-words [pof corpus-relative-freqs]
   (sort #(> (abs (second %)) (abs (second %2)))
