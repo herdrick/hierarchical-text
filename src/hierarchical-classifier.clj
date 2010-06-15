@@ -21,10 +21,10 @@
 				(mean (vector (relative-freq (first pof) word)  ; combine frequencies by taking their unweighted mean.  
 					      (relative-freq (second pof) word)))))))
      
-(defn euclidean [pof1 pof2 word-list]
-  (sqrt (reduce + (map (fn [word]
-			 (sq (abs (- (relative-freq pof1 word) (relative-freq pof2 word)))))
-		       word-list))))
+(def euclidean (memoize (fn [pof1 pof2 word-list]
+			  (sqrt (reduce + (map (fn [word]
+						 (sq (abs (- (relative-freq pof1 word) (relative-freq pof2 word)))))
+					       word-list))))))
      
 (defn best-pairing [pofs]
   (let [word-list (set-m (to-words (sort-m (flatten pofs))))] ;sort the result of flatten for more likely cache hit on to-words.
