@@ -23,7 +23,8 @@
 	   (into {} (map (fn [k] [k (g (m2 k))]) m2-only)))))
 
 (defn combine-relative-freqs [rf1 rf2]
-  (merge-general (comp mean vector) (fn [val] (mean [val 0])) rf1 rf2))  ; i'm just combining relfreqs taking their (unweighted) mean.  
+  (merge-general (comp mean vector)
+		 (fn [val] (mean [val 0])) rf1 rf2))  ; i'm just combining relfreqs taking their (unweighted) mean.  
 
 (def relative-freq (memoize (fn [pof]
 			      (if (instance? java.io.File pof)
@@ -37,10 +38,11 @@
 		       word-list))))
 
 (defn best-pairing [pofs corpus-relative-freqs]
-  (first (sort (fn [[pof-1-1 pof-1-2] [pof-2-1 pof-2-2]]
-		 (compare (euclidean pof-1-1 pof-1-2 (keys corpus-relative-freqs))
-			  (euclidean pof-2-1 pof-2-2 (keys corpus-relative-freqs))))							 
-	       (combinations pofs 2))))
+   (let [word-list (keys corpus-relative-freqs)]
+     (first (sort (fn [[pof-1-1 pof-1-2] [pof-2-1 pof-2-2]]
+		    (compare (euclidean pof-1-1 pof-1-2 word-list)
+			     (euclidean pof-2-1 pof-2-2 word-list)))							 
+		  (combinations pofs 2)))))
 
 ; makes an agglomerative hierarchical cluster of the pofs.
 ; pof = pairing or file.  pofs is a list of them. 
