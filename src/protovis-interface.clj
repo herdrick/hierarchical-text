@@ -1,5 +1,5 @@
 (ns user)
-(defn node [whatever interesting-words-count corpus-relative-freqs]
+(defn node [whatever interesting-words-count word-idx]
   (defn leaf [pof]
     (str "'" (.replace (str pof) "'" "") "'"  
 	 " : 1")) 
@@ -10,12 +10,12 @@
 					 (let [left-wrapper (if (< freq 0) "(" "")
 					       right-wrapper (if (< freq 0) ")" "")]
 					   (str left-wrapper (.trim word) right-wrapper " ")))
-				       (take interesting-words-count (interesting-words pof corpus-relative-freqs)))))) 
+				       (take interesting-words-count (interesting-words pof word-idx)))))) 
 	 "': {"   
-	 (node (first pof) interesting-words-count corpus-relative-freqs)
+	 (node (first pof) interesting-words-count word-idx)
 	 " , " 
-	 (node (second pof) interesting-words-count corpus-relative-freqs) "}"))
-   
+	 (node (second pof) interesting-words-count word-idx) "}"))
+  
   (if (instance? java.io.File whatever)
     (leaf whatever)
     (pair whatever))) 
