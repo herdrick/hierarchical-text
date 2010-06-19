@@ -15,12 +15,12 @@
 
 (def relative-freq-file (memoize (fn [pof index]
 				   (let [freqs (frequencies (to-words pof))]
-				     (div (matrix (map #(or (freqs %) 0) index)) (count freqs))))))
+				     (div (matrix (map #(or (freqs %) 0) index)) (count (to-words pof)))))))
 
 (def relative-freq (memoize (fn [pof idx]
 			      (if (instance? java.io.File pof)
 				(relative-freq-file pof idx)
-				(matrix (map (comp mean vector)
+				(matrix (map (comp mean vector) ;todo: can this be (map mean <1stmatrix> <2ndmatrix>))  with a trans or two in there?  
 					     (relative-freq (first pof) idx)  ; combine frequencies by taking their unweighted mean.  
 					     (relative-freq (second pof) idx)))))))
 
@@ -44,15 +44,15 @@
       (cluster (conj (filter (complement #(some (set [%]) best-pair))
 			     pofs)
 		     best-pair)))))
-  
 
 (def *directory-string* "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/store/three-file-stash")
 (def *txt-files* (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File *directory-string*) nil true)))
 
+
 (defn interesting-words [pof word-idx]
   (map (fn [[idx freq]] [((apply vector word-idx) (int idx)) freq])
        (sort (fn [[idx1 freq1] [idx2 freq2]] (> (abs freq1) (abs freq2))) 
-	     (map (comp flatten)
+	     (map (comp flatten)  ;todo: wtf   this is broken, right?  
 		  (trans [(range (length word-idx)) (minus (relative-freq pof word-idx)
 							   (relative-freq-file *txt-files* word-idx))])))))
 
@@ -66,5 +66,5 @@
 
   )
 
-
+ 
 (def foobar "user")
