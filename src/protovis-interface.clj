@@ -1,4 +1,4 @@
-(ns user)
+(ns ordinary)
 (defn node [whatever interesting-words-count corpus-relative-freqs]
   (defn leaf [pof]
     (str "'" (.replace (str pof) "'" "") "'"  
@@ -25,5 +25,4 @@
 (defn write-protovis-file [o]
   (spit *protovis-json-file* 
 	(str "var flare = {" o "};")))
-
 

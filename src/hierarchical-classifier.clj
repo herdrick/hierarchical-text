@@ -1,7 +1,20 @@
-(ns user (:use [incanter.core :only (abs sq sqrt)]
-	     [incanter.stats :only (mean)]
-	     [clojure.contrib.combinatorics]
-	     [clojure.set]))
+(ns ordinary (:use [incanter.core :only (abs sq sqrt)]
+		   [incanter.stats :only (mean)]
+		   [clojure.contrib.combinatorics]
+		   [clojure.set]))
+
+
+(def to-words (memoize (fn [file-or-files]
+			 (cond (coll? file-or-files) (apply concat (map to-words file-or-files))
+			       true (re-seq #"[a-z]+" (org.apache.commons.lang.StringUtils/lowerCase (slurp (str file-or-files))))))))
+
+(def relative-freq-file (memoize (fn [pof]
+				   (let [words (to-words pof)
+					 freqs (frequencies words)
+					 word-count (count words)]
+				     (apply hash-map (flatten (map (fn [[word count]]
+								     [word (/ count word-count)])
+								   freqs)))))))
 
 (defn merge-general [f g m1 m2]
   (let [m1-only (difference (set (keys m1)) (set (keys m2)))
@@ -9,17 +22,6 @@
     (merge (merge-with f m1 m2)
 	   (into {} (map (fn [k] [k (g (m1 k))]) m1-only))
 	   (into {} (map (fn [k] [k (g (m2 k))]) m2-only)))))
-
-(def to-words (memoize (fn [file-or-files]
-			 (cond (coll? file-or-files) (apply concat (map to-words file-or-files))
-			       true (re-seq #"[a-z]+" (org.apache.commons.lang.StringUtils/lowerCase (slurp (str file-or-files))))))))
-
-(def relative-freq-file (memoize (fn [pof]
-				   (let [freqs (frequencies (to-words pof))
-					 words-in-freqs (count freqs)]
-				     (apply hash-map (flatten (map (fn [[word count]]
-								     [word (/ count words-in-freqs)])
-								   freqs)))))))
 
 (defn combine-relative-freqs [rf1 rf2]
   (merge-general (comp mean vector)
@@ -62,5 +64,7 @@
 	       [word (- (or ((relative-freq pof) word) 0) (or (corpus-relative-freqs word) 0))])
 	     (keys corpus-relative-freqs))))
 
-(def directory-string "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/mixed")
+(def directory-string "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/store/three-file-stash")
 (def txt-files (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File directory-string) nil true)))
+
+(def foobar "ordinary")
