@@ -48,23 +48,14 @@
 (def *directory-string* "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/store/three-file-stash")
 (def *txt-files* (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File *directory-string*) nil true)))
 
-
 (defn interesting-words [pof word-idx]
-  (map (fn [[idx freq]] [((apply vector word-idx) (int idx)) freq])
-       (sort (fn [[idx1 freq1] [idx2 freq2]] (> (abs freq1) (abs freq2))) 
-	     (map (comp flatten)  ;todo: wtf   this is broken, right?  
-		  (trans [(range (length word-idx)) (minus (relative-freq pof word-idx)
-							   (relative-freq-file *txt-files* word-idx))])))))
-
+  (let [idx->word (apply vector word-idx)]
+    (map (fn [[idx freq]] [(idx->word (int idx)) freq])
+	 (sort (fn [[idx1 freq1] [idx2 freq2]] (> (abs freq1) (abs freq2))) 
+	       (map identity ;sort won't take a matrix - this creates a list
+		    (trans [(range (length word-idx)) (minus (relative-freq pof word-idx)
+							     (relative-freq-file *txt-files* word-idx))]))))))
+  
 (def *word-idx* (let [freqs-hash (frequencies (to-words *txt-files*))]
 			 (map first (sort (fn [[k1 v1] [k2 v2]]
 					    (compare v1 v2)) freqs-hash))))
-
-(defn view-sorted [m col com]
-  ;(matrix (sort (fn [r1 r2] (com (nth r1 col) (nth r2 col)))
-;		(map (comp flatten vector) m))))
-
-  )
-
- 
-(def foobar "user")
