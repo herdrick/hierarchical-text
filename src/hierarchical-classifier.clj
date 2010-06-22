@@ -3,8 +3,6 @@
 		   [clojure.contrib.combinatorics]
 		   [clojure.set]))
 
-(def flatten-sort (memoize (comp sort flatten)))
-
 (def to-words (memoize (fn [file-or-files]
 			 (cond (coll? file-or-files) (apply concat (map to-words file-or-files))
 			       true (re-seq #"[a-z]+" (org.apache.commons.lang.StringUtils/lowerCase (slurp (str file-or-files))))))))
@@ -64,10 +62,8 @@
 					;(defn interesting-words [pof c-r-f]
 ;  [[(.substring (str (rand) ) 2 6) 0.1] [(.substring (str (rand) ) 2 6) 0.01] [ (.substring (str (rand) ) 2 6) 0.001]])
 
-(defn interesting-words [pof pofs]
-  (let [all-files (flatten-sort pofs)
-	corpus-freqs (freq-files all-files)
-	pof-freq (freq pof)]
+(defn interesting-words [pof corpus-freqs]
+  (let [pof-freq (freq pof)]
     (sort #(> (abs (second %)) (abs (second %2)))
 	  (map (fn [word]
 		 [word (- (or (pof-freq word) 0) (or (corpus-freqs word) 0))])
