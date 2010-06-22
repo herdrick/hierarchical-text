@@ -3,17 +3,19 @@
 		   [clojure.contrib.combinatorics]
 		   [clojure.set]))
 
+(def flatten-sort (memoize (comp sort flatten)))
+
 (def to-words (memoize (fn [file-or-files]
 			 (cond (coll? file-or-files) (apply concat (map to-words file-or-files))
 			       true (re-seq #"[a-z]+" (org.apache.commons.lang.StringUtils/lowerCase (slurp (str file-or-files))))))))
 
-(def relative-freq-files (memoize (fn [pof]
-				   (let [words (to-words pof)
-					 freqs (frequencies words)
-					 word-count (count words)]
-				     (apply hash-map (flatten (map (fn [[word count]]
-								     [word (/ count word-count)])
-								   freqs)))))))
+(def freq-files (memoize (fn [pof]
+			   (let [words (to-words pof)
+				 freqs (frequencies words)
+				 word-count (count words)]
+			     (apply hash-map (flatten (map (fn [[word count]]
+							     [word (/ count word-count)])
+							   freqs)))))))
 
 (defn merge-general [f g m1 m2]
   (let [m1-only (difference (set (keys m1)) (set (keys m2)))
@@ -22,24 +24,26 @@
 	   (into {} (map (fn [k] [k (g (m1 k))]) m1-only))
 	   (into {} (map (fn [k] [k (g (m2 k))]) m2-only)))))
 
-(defn combine-relative-freqs [rf1 rf2]
+(defn combine-freqs [rf1 rf2]
   (merge-general (comp mean vector)
 		 (fn [val] (mean [val 0])) rf1 rf2))  ; i'm just combining relfreqs taking their (unweighted) mean.  
 
-(def relative-freq (memoize (fn [pof]
-			      (if (instance? java.io.File pof)
-				(relative-freq-files pof)
-				(combine-relative-freqs (relative-freq (first pof))  ; combine frequencies by taking their unweighted mean.  
-							(relative-freq (second pof)))))))
+(def freq (memoize (fn [pof]
+		     (if (instance? java.io.File pof)
+		       (freq-files pof)
+		       (combine-freqs (freq (first pof))  ; combine frequencies by taking their unweighted mean.  
+				      (freq (second pof)))))))
 
 (def euclidean (memoize (fn [pof1 pof2 word-list]
-			  (sqrt (reduce + (map (fn [word]
-						 (sq (- (or ((relative-freq pof1) word) 0)
-							(or ((relative-freq pof2) word) 0))))
-					       word-list))))))
+			  (let [pof1-freq (freq pof1)
+				pof2-freq (freq pof2)]
+			    (sqrt (reduce + (map (fn [word]
+						   (sq (- (or (pof1-freq word) 0)
+							  (or (pof2-freq word) 0))))
+						 word-list)))))))
 
-(defn best-pairing [pofs corpus-relative-freqs]
-   (let [word-list (keys corpus-relative-freqs)]
+(defn best-pairing [pofs corpus-freqs]
+   (let [word-list (keys corpus-freqs)]
      (first (sort (fn [[pof-1-1 pof-1-2] [pof-2-1 pof-2-2]]
 		    (compare (euclidean pof-1-1 pof-1-2 word-list)
 			     (euclidean pof-2-1 pof-2-2 word-list)))							 
@@ -48,23 +52,26 @@
 ; makes an agglomerative hierarchical cluster of the pofs.
 ; pof = pairing or file.  pofs is a list of them. 
 (defn cluster
-  ([pofs] (cluster pofs (relative-freq-files (flatten pofs))))
-  ([pofs corpus-relative-freqs] 
+  ([pofs] (cluster pofs (freq-files (flatten pofs))))
+  ([pofs corpus-freqs] 
      (if (= (count pofs) 1)
-       pofs
-       (let [best-pair (best-pairing pofs corpus-relative-freqs)]
+       (first pofs)
+       (let [best-pair (best-pairing pofs corpus-freqs)]
 	 (cluster (conj (filter (complement #(some (set [%]) best-pair))
 				pofs)
 			best-pair))))))
 
-;(defn interesting-words [pof c-r-f]
+					;(defn interesting-words [pof c-r-f]
 ;  [[(.substring (str (rand) ) 2 6) 0.1] [(.substring (str (rand) ) 2 6) 0.01] [ (.substring (str (rand) ) 2 6) 0.001]])
 
-(defn interesting-words [pof corpus-relative-freqs]
-  (sort #(> (abs (second %)) (abs (second %2)))
-	(map (fn [word]
-	       [word (- (or ((relative-freq pof) word) 0) (or (corpus-relative-freqs word) 0))])
-	     (keys corpus-relative-freqs))))
-
-(def *directory-string* "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/store/three-file-stash")
-(def *txt-files* (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File *directory-string*) nil true)))
+(defn interesting-words [pof pofs]
+  (let [all-files (flatten-sort pofs)
+	corpus-freqs (freq-files all-files)
+	pof-freq (freq pof)]
+    (sort #(> (abs (second %)) (abs (second %2)))
+	  (map (fn [word]
+		 [word (- (or (pof-freq word) 0) (or (corpus-freqs word) 0))])
+	       (keys corpus-freqs)))))
+  
+(def *directory-string* "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/store/eight-file-stash")
+(def *txt-files* (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File *directory-string*) nil false)))

@@ -1,5 +1,9 @@
 (ns ordinary)
-(defn node [whatever interesting-words-count corpus-relative-freqs]
+(defn pof->js [top-pof interesting-words-count]
+  (defn node [pof]
+    (if (instance? java.io.File pof)
+      (leaf pof)
+      (pair pof)))
   (defn leaf [pof]
     (str "'" (.replace (str pof) "'" "") "'"  
 	 " : 1")) 
@@ -10,15 +14,13 @@
 					 (let [left-wrapper (if (< freq 0) "(" "")
 					       right-wrapper (if (< freq 0) ")" "")]
 					   (str left-wrapper (.trim word) right-wrapper " ")))
-				       (take interesting-words-count (interesting-words pof corpus-relative-freqs)))))) 
+				       (take interesting-words-count (interesting-words pof top-pof)))))) 
 	 "': {"   
-	 (node (first pof) interesting-words-count corpus-relative-freqs)
+	 (node (first pof))
 	 " , " 
-	 (node (second pof) interesting-words-count corpus-relative-freqs) "}"))
-   
-  (if (instance? java.io.File whatever)
-    (leaf whatever)
-    (pair whatever))) 
+	 (node (second pof)) "}"))
+  
+  (node top-pof)) 
 
 (def *protovis-json-file* "file:///Users/herdrick/Dropbox/clojure/hierarchical-classifier/visualize/protovis-3.2/flare.js")
 
