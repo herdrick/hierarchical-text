@@ -7,7 +7,7 @@
 			 (cond (coll? file-or-files) (apply concat (map to-words file-or-files))
 			       true (re-seq #"[a-z]+" (org.apache.commons.lang.StringUtils/lowerCase (slurp (str file-or-files))))))))
 
-(def relative-freq-file (memoize (fn [pof]
+(def relative-freq-files (memoize (fn [pof]
 				   (let [words (to-words pof)
 					 freqs (frequencies words)
 					 word-count (count words)]
@@ -28,14 +28,14 @@
 
 (def relative-freq (memoize (fn [pof]
 			      (if (instance? java.io.File pof)
-				(relative-freq-file pof)
+				(relative-freq-files pof)
 				(combine-relative-freqs (relative-freq (first pof))  ; combine frequencies by taking their unweighted mean.  
 							(relative-freq (second pof)))))))
 
 (def euclidean (memoize (fn [pof1 pof2 word-list]
 			  (sqrt (reduce + (map (fn [word]
-						 (sq (abs (- (or ((relative-freq pof1) word) 0)
-							     (or ((relative-freq pof2) word) 0)))))
+						 (sq (- (or ((relative-freq pof1) word) 0)
+							(or ((relative-freq pof2) word) 0))))
 					       word-list))))))
 
 (defn best-pairing [pofs corpus-relative-freqs]
@@ -48,7 +48,7 @@
 ; makes an agglomerative hierarchical cluster of the pofs.
 ; pof = pairing or file.  pofs is a list of them. 
 (defn cluster
-  ([pofs] (cluster pofs (relative-freq-file (flatten pofs))))
+  ([pofs] (cluster pofs (relative-freq-files (flatten pofs))))
   ([pofs corpus-relative-freqs] 
      (if (= (count pofs) 1)
        pofs
@@ -66,7 +66,5 @@
 	       [word (- (or ((relative-freq pof) word) 0) (or (corpus-relative-freqs word) 0))])
 	     (keys corpus-relative-freqs))))
 
-(def directory-string "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/store/three-file-stash")
-(def txt-files (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File directory-string) nil true)))
-
-(def foobar "ordinary")
+(def *directory-string* "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/store/three-file-stash")
+(def *txt-files* (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File *directory-string*) nil true)))
