@@ -3,9 +3,9 @@
 		   [clojure.contrib.combinatorics]
 		   [clojure.set]))
 
-(def to-words (memoize (fn [file-or-files]
-			 (cond (coll? file-or-files) (apply concat (map to-words file-or-files))
-			       true (re-seq #"[a-z]+" (org.apache.commons.lang.StringUtils/lowerCase (slurp (str file-or-files))))))))
+(def to-words (fn [file-or-files]
+		(cond (coll? file-or-files) (apply concat (map to-words file-or-files))
+		      true (re-seq #"[a-z]+" (org.apache.commons.lang.StringUtils/lowerCase (slurp (str file-or-files)))))))
 
 (def freq-files (memoize (fn [pof]
 			   (let [words (to-words pof)
@@ -58,9 +58,6 @@
 	 (cluster (conj (filter (complement #(some (set [%]) best-pair))
 				pofs)
 			best-pair))))))
-
-					;(defn interesting-words [pof c-r-f]
-;  [[(.substring (str (rand) ) 2 6) 0.1] [(.substring (str (rand) ) 2 6) 0.01] [ (.substring (str (rand) ) 2 6) 0.001]])
 
 (defn interesting-words [pof corpus-freqs]
   (let [pof-freq (freq pof)]
