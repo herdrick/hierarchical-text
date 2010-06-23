@@ -14,22 +14,22 @@
 
 (def word-list (memoize (fn [pof]
 			  (set-m (to-words pof)))))
-				 
+
 (def relative-freq-files (memoize (fn [pof word]
-				     (/ (or (get (frequencies-m (to-words pof)) word) 0)
-					(count-m (to-words pof))))))
-     
+				    (/ (or (get (frequencies-m (to-words pof)) word) 0)
+				       (count-m (to-words pof))))))
+
 (def relative-freq (memoize (fn [pof word]
 			      (if (instance? java.io.File pof)
 				(relative-freq-files pof word)
 				(mean (vector (relative-freq (first pof) word)  ; combine frequencies by taking their unweighted mean.  
 					      (relative-freq (second pof) word)))))))
-     
+
 (def euclidean (memoize (fn [pof1 pof2 word-list]
 			  (sqrt (reduce + (map (fn [word]
 						 (sq (- (relative-freq pof1 word) (relative-freq pof2 word))))
 					       word-list))))))
-     
+
 (defn best-pairing [pofs]
   (let [words (word-list pofs)] ;let clause for brevity  ;sort the result of flatten for more likely cache hit on to-words.
     (first (sort (fn [[pof-1-1 pof-1-2] [pof-2-1 pof-2-2]]
