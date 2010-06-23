@@ -1,6 +1,7 @@
 (ns radical (:use [incanter.core :only (abs sq sqrt)]
 		  [incanter.stats :only (mean)]
 		  [clojure.contrib.combinatorics :only (combinations)]))
+		 
 
 (def frequencies-m (memoize frequencies))
 (def count-m (memoize count))
@@ -25,17 +26,17 @@
 				(mean (vector (relative-freq (first pof) word)  ; combine frequencies by taking their unweighted mean.  
 					      (relative-freq (second pof) word)))))))
 
-(def euclidean (memoize (fn [pof1 pof2 word-list]
+(def euclidean (memoize (fn [pof1 pof2 pofs]
 			  (sqrt (reduce + (map (fn [word]
-						 (sq (- (relative-freq pof1 word) (relative-freq pof2 word))))
-					       word-list))))))
+						 (sq (- (relative-freq pof1 word)
+							(relative-freq pof2 word))))
+					       (word-list pofs)))))))
 
 (defn best-pairing [pofs]
-  (let [words (word-list pofs)] ;let clause for brevity  ;sort the result of flatten for more likely cache hit on to-words.
-    (first (sort (fn [[pof-1-1 pof-1-2] [pof-2-1 pof-2-2]]
-		   (compare (euclidean pof-1-1 pof-1-2 words)
-			    (euclidean pof-2-1 pof-2-2 words)))							 
-		 (combinations pofs 2)))))
+  (first (sort (fn [[pof-1-1 pof-1-2] [pof-2-1 pof-2-2]]
+		 (compare (euclidean pof-1-1 pof-1-2 pofs)
+			  (euclidean pof-2-1 pof-2-2 pofs)))							 
+	       (combinations pofs 2))))
 
 ; makes an agglomerative hierarchical cluster of the pofs.
 ; pof = pairing or file.  pofs is a list of them.
@@ -52,5 +53,5 @@
 	       [word (- (relative-freq pof word) (relative-freq-files top-pof word))])
 	     (word-list top-pof))))
 
-(def *directory-string* "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/store/three-file-stash/")
+(def *directory-string* "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/store/five-file-stash/")
 (def *txt-files* (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File *directory-string*) nil false)))

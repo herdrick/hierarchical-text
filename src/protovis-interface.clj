@@ -3,11 +3,9 @@
 (defn pof->js [top-pof interesting-words-count]
   (defn node [pof]
     (defn leaf [pof]
-      (prn "leaf " pof)
       (str "'" (.replace (str pof) "'" "") "'"  
 	   " : 1")) 
     (defn pair [pof]
-      (prn "pair " pof)
       (str "'"
 	   (apply str (.trim (apply str  
 				    (map (fn [[word freq]]
@@ -19,7 +17,6 @@
 	   (node (first pof))
 	   " , " 
 	   (node (second pof)) "}"))
-    (prn "node " pof)
     (if (instance? java.io.File pof)
       (leaf pof)
       (pair pof)))
