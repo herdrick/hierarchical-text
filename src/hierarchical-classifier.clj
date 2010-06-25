@@ -66,5 +66,5 @@
 		 [word (- (or (pof-freq word) 0) (or (corpus-freqs word) 0))])
 	       (keys corpus-freqs)))))
   
-(def *directory-string* "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/store/eight-file-stash")
+(def *directory-string* "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/store/five-file-stash/")
 (def *txt-files* (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File *directory-string*) nil false)))
