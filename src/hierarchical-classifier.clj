@@ -3,9 +3,9 @@
 		   [clojure.contrib.combinatorics]
 		   [clojure.set]))
 
-(def to-words (fn [file-or-files]
-		(cond (coll? file-or-files) (apply concat (map to-words file-or-files))
-		      true (re-seq #"[a-z]+" (org.apache.commons.lang.StringUtils/lowerCase (slurp (str file-or-files)))))))
+(def to-words (fn [file-tree]
+		(cond (coll? file-tree) (apply concat (map to-words (flatten file-tree)))
+		      true (re-seq #"[a-z]+" (org.apache.commons.lang.StringUtils/lowerCase (slurp (str file-tree)))))))
 
 (def freq-files (memoize (fn [pof]
 			   (let [words (to-words pof)
@@ -15,6 +15,7 @@
 							     [word (/ count word-count)])
 							   freqs)))))))
 
+;merges two maps.  when both have a given key, use f to combine the vals.  use g on all other vals.
 (defn merge-general [f g m1 m2]
   (let [m1-only (difference (set (keys m1)) (set (keys m2)))
 	m2-only (difference (set (keys m2)) (set (keys m1)))]
@@ -22,9 +23,9 @@
 	   (into {} (map (fn [k] [k (g (m1 k))]) m1-only))
 	   (into {} (map (fn [k] [k (g (m2 k))]) m2-only)))))
 
-(defn combine-freqs [rf1 rf2]
+(defn combine-freqs [f1 f2]
   (merge-general (comp mean vector)
-		 (fn [val] (mean [val 0])) rf1 rf2))  ; i'm just combining relfreqs taking their (unweighted) mean.  
+		 (fn [val] (mean [val 0])) f1 f2))  ; i'm just combining freqs taking their (unweighted) mean.  
 
 (def freq (memoize (fn [pof]
 		     (if (instance? java.io.File pof)
