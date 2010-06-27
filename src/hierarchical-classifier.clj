@@ -7,10 +7,10 @@
 (def set-m (memoize set))
 (def flatten-m (memoize flatten))
 
-(def to-words (memoize (fn [file-or-files]
-			 (if (coll? file-or-files)
-			   (apply concat (map to-words (set-m (flatten-m file-or-files))))
-			   (re-seq #"[a-z]+" (org.apache.commons.lang.StringUtils/lowerCase (slurp (str file-or-files))))))))
+(def to-words (memoize (fn [file-tree]
+			 (if (coll? file-tree)
+			   (apply concat (map to-words (set-m (flatten-m file-tree))))
+			   (re-seq #"[a-z]+" (org.apache.commons.lang.StringUtils/lowerCase (slurp (str file-tree))))))))
 
 (def word-list (memoize (fn [pof]
 			  (set-m (to-words pof)))))
