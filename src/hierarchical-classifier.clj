@@ -2,28 +2,27 @@
 		  [incanter.stats :only (mean)]
 		  [clojure.contrib.combinatorics :only (combinations)]))
 		 
-(def frequencies-m (memoize frequencies))
-(def count-m (memoize count))
 (def set-m (memoize set))
 (def flatten-m (memoize flatten))
+(def frequencies-m (memoize frequencies))
+(def count-m (memoize count))
 
 (def to-words (memoize (fn [file-tree]
 			 (if (coll? file-tree)
 			   (apply concat (map to-words (set-m (flatten-m file-tree))))
 			   (re-seq #"[a-z]+" (org.apache.commons.lang.StringUtils/lowerCase (slurp (str file-tree))))))))
 
-(def word-list (memoize (fn [pof]
-			  (set-m (to-words pof)))))
+(def word-list (memoize (comp set-m to-words)))
 
 (def freq-files (memoize (fn [pof word]
-				    (/ (or (get (frequencies-m (to-words pof)) word) 0)
-				       (count-m (to-words pof))))))
+			   (/ (or (get (frequencies-m (to-words pof)) word) 0) 
+			      (count-m (to-words pof))))))
 
 (def freq (memoize (fn [pof word]
-			      (if (instance? java.io.File pof)
-				(freq-files pof word)
-				(mean (vector (freq (first pof) word)  ; combine frequencies by taking their unweighted mean.  
-					      (freq (second pof) word)))))))
+		     (if (instance? java.io.File pof)
+		       (freq-files pof word)
+		       (mean (vector (freq (first pof) word)  ; combine frequencies by taking their unweighted mean.  
+				     (freq (second pof) word)))))))
 
 (def euclidean (memoize (fn [pof1 pof2 pofs]
 			  (sqrt (reduce + (map (fn [word]
