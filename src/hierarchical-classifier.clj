@@ -4,8 +4,9 @@
 	     [clojure.set]))
 
 (def frequencies-m (memoize frequencies))
-
-(def flatten-sort (memoize (comp sort flatten)))
+(def sort-m (memoize sort))
+(def flatten-m (memoize flatten))
+;(def flatten-sort (memoize (comp sort flatten)))
 
 (def to-words (memoize (fn [file-tree]
 			 (cond (coll? file-tree) (apply concat (map to-words (flatten file-tree)))
@@ -31,7 +32,7 @@
 (def euclidean (memoize (comp sqrt sum sq minus)))
 
 (defn best-pairing [pofs]
-  (let [all-files (flatten-sort pofs)] ;this could be pushed all the way down to freq-files, passing pofs around instead.  converting here to get cache hits on freqs.  opt.
+  (let [all-files (sort-m (flatten-m pofs))] ;this could be pushed all the way down to freq-files, passing pofs around instead.  converting here to get cache hits on freqs.  opt.
     (first (sort (fn [[pof-1-1 pof-1-2] [pof-2-1 pof-2-2]]
 		   (compare (euclidean (freqs pof-1-1 all-files) (freqs pof-1-2 all-files))
 			    (euclidean (freqs pof-2-1 all-files) (freqs pof-2-2 all-files))))							 
@@ -48,7 +49,7 @@
 		     best-pair)))))
 
 (defn interesting-words [pof pofs]
-  (let [all-files (flatten-sort pofs)
+  (let [all-files (sort-m (flatten-m pofs))
 	word-idx (make-word-idx all-files)] ;need this list to be a vector for random access use.
     (map (fn [[idx freq]] [(word-idx (int idx)) freq])
 	 (sort (fn [[idx1 freq1] [idx2 freq2]] (> (abs freq1) (abs freq2))) 
