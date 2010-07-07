@@ -5,7 +5,8 @@
 
 (def frequencies-m (memoize frequencies))
 (def sort-m (memoize sort))
-(def flatten-m (memoize flatten))]
+(def flatten-m (memoize flatten))
+;(def flatten-sort (memoize (comp sort flatten)))
 
 (def to-words (memoize (fn [file-tree]
 			 (cond (coll? file-tree) (apply concat (map to-words (flatten file-tree)))
@@ -20,34 +21,29 @@
 				   (let [words (to-words file-tree)] ;let clause for brevity
 				     (div (matrix (map #(or ((frequencies-m words) %) 0)
 						       (make-word-idx all-files))) (count words))))))
-; returns vector
+
 (def freqs (memoize (fn [pof all-files]
 			       (if (instance? java.io.File pof)
 				 (freq-files pof all-files)
-				 (map (comp mean vector) ; combine frequencies by taking their unweighted mean.
-				      (freqs (first pof) all-files)    
-				      (freqs (second pof) all-files))))))
+				 (matrix (map (comp mean vector) ; combine frequencies by taking their unweighted mean.
+					      (freqs (first pof) all-files)    
+					      (freqs (second pof) all-files)))))))
 
-(defn scores [pairings all-files]
-  (let [f-vecs-1 (freqs-matrix first pairings all-files)
-	f-vecs-2 (freqs-matrix second pairings all-files)
-	diff-matrix (minus f-vecs-1 f-vecs-2)
-	sums-of-squares-of-diffs (diag (mmult diff-matrix  (trans diff-matrix)))]
-    (sqrt sums-of-squares-of-diffs))) ; sqrt is vectorized, as is minus.
+(def euclidean (memoize (comp sqrt sum sq minus)))
 
 (defn best-pairing [pofs]
-  (let [pairings (combinations pofs 2)]
-    (second (first (sort (apply map vector [(scores pairings pofs) pairings]))))))
+  (let [all-files (sort-m (flatten-m pofs))] ;this could be pushed all the way down to freq-files, passing pofs around instead.  converting here to get cache hits on freqs.  opt.
+    (first (sort (fn [[pof-1-1 pof-1-2] [pof-2-1 pof-2-2]]
+		   (compare (euclidean (freqs pof-1-1 all-files) (freqs pof-1-2 all-files))
+			    (euclidean (freqs pof-2-1 all-files) (freqs pof-2-2 all-files))))							 
+		   (combinations pofs 2)))))
 
-(defn freqs-matrix [accessor pairings all-files]
-  (map (comp #(freqs % all-files) accessor) pairings))
-	 
 ; makes an agglomerative hierarchical cluster of the pofs.
 ; pof = pairing or file.  pofs is a list of them. 
 (defn cluster [pofs] 
   (if (= (count pofs) 1)
     (first pofs)
-    (let [best-pair (best-pairing-2 pofs)]
+    (let [best-pair (best-pairing pofs)]
       (cluster (conj (filter (complement #(some (set [%]) best-pair))
 			     pofs)
 		     best-pair)))))
