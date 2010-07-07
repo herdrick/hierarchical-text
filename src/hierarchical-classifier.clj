@@ -7,7 +7,7 @@
 		(cond (coll? file-tree) (apply concat (map to-words (flatten file-tree)))
 		      true (re-seq #"[a-z]+" (org.apache.commons.lang.StringUtils/lowerCase (slurp (str file-tree)))))))
 
-(def freq-files (memoize (fn [pof]
+(def freqs-files (memoize (fn [pof]
 			   (let [words (to-words pof)
 				 word-count (count words)]
 			     (apply hash-map (flatten (map (fn [[word count]]
@@ -26,29 +26,29 @@
   (merge-general (comp mean vector)
 		 (fn [val] (mean [val 0])) f1 f2))  ; i'm just combining freqs taking their (unweighted) mean.  
 
-(def freq (memoize (fn [pof]
+(def freqs (memoize (fn [pof]
 		     (if (instance? java.io.File pof)
-		       (freq-files pof)
-		       (combine-freqs (freq (first pof))  ; combine frequencies by taking their unweighted mean.  
-				      (freq (second pof)))))))
+		       (freqs-files pof)
+		       (combine-freqs (freqs (first pof))  ; combine frequencies by taking their unweighted mean.  
+				      (freqs (second pof)))))))
 
-(def euclidean (memoize (fn [freq1 freq2 feature-list]
+(def euclidean (memoize (fn [freqs1 freqs2 feature-list]
 			  (sqrt (reduce + (map (fn [word]
-						 (sq (- (or (freq1 word) 0)
-							(or (freq2 word) 0))))
+						 (sq (- (or (freqs1 word) 0)
+							(or (freqs2 word) 0))))
 					       feature-list))))))
 
 (defn best-pairing [pofs corpus-freqs]
    (let [word-list (keys corpus-freqs)]
      (first (sort (fn [[pof-1-1 pof-1-2] [pof-2-1 pof-2-2]]
-		    (compare (euclidean (freq pof-1-1) (freq pof-1-2) word-list)
-			     (euclidean (freq pof-2-1) (freq pof-2-2) word-list)))							 
+		    (compare (euclidean (freqs pof-1-1) (freqs pof-1-2) word-list)
+			     (euclidean (freqs pof-2-1) (freqs pof-2-2) word-list)))							 
 		  (combinations pofs 2)))))
 
 ; makes an agglomerative hierarchical cluster of the pofs.
 ; pof = pairing or file.  pofs is a list of them. 
 (defn cluster
-  ([pofs] (cluster pofs (freq-files (flatten pofs))))
+  ([pofs] (cluster pofs (freqs-files (flatten pofs))))
   ([pofs corpus-freqs] 
      (if (= (count pofs) 1)
        (first pofs)
@@ -58,10 +58,10 @@
 			best-pair))))))
 
 (defn interesting-words [pof corpus-freqs]
-  (let [pof-freq (freq pof)]
+  (let [pof-freqs (freqs pof)]
     (sort #(> (abs (second %)) (abs (second %2)))
 	  (map (fn [word]
-		 [word (- (or (pof-freq word) 0) (or (corpus-freqs word) 0))])
+		 [word (- (or (pof-freqs word) 0) (or (corpus-freqs word) 0))])
 	       (keys corpus-freqs)))))
   
 (def *directory-string* "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/store/five-file-stash/")

@@ -1,7 +1,7 @@
 (ns ordinary)
 (defn pof->js [top-pof interesting-words-count]
   (let [all-files (flatten top-pof)
-	corpus-freqs (freq-files all-files)]	
+	corpus-freqs (freqs-files all-files)]	
     (defn node [pof]
       (defn leaf [pof]
 	(str "'" (.replace (str pof) "'" "") "'"  
