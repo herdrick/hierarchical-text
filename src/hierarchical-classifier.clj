@@ -58,6 +58,3 @@
 
 (def *directory-string* "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/store/five-file-stash/")
 (def *txt-files* (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File *directory-string*) nil false)))
-  
-;(def *word-idx* (let [freqs-hash (frequencies (to-words *txt-files*))]
-;			 (make-word-idx *txt-files*)))
