@@ -9,11 +9,10 @@
 
 (def freq-files (memoize (fn [pof]
 			   (let [words (to-words pof)
-				 freqs (frequencies words)
 				 word-count (count words)]
 			     (apply hash-map (flatten (map (fn [[word count]]
 							     [word (/ count word-count)])
-							   freqs)))))))
+							    (frequencies words))))))))
 
 ;merges two maps.  when both have a given key, use f to combine the vals.  use g on all other vals.
 (defn merge-general [f g m1 m2]
