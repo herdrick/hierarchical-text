@@ -6,7 +6,6 @@
 (def frequencies-m (memoize frequencies))
 (def sort-m (memoize sort))
 (def flatten-m (memoize flatten))
-;(def flatten-sort (memoize (comp sort flatten)))
 
 (def to-words (memoize (fn [file-tree]
 			 (cond (coll? file-tree) (apply concat (map to-words (flatten file-tree)))
