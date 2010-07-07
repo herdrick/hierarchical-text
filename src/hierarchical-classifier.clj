@@ -33,19 +33,17 @@
 		       (combine-freqs (freq (first pof))  ; combine frequencies by taking their unweighted mean.  
 				      (freq (second pof)))))))
 
-(def euclidean (memoize (fn [pof1 pof2 word-list]
-			  (let [pof1-freq (freq pof1)
-				pof2-freq (freq pof2)]
-			    (sqrt (reduce + (map (fn [word]
-						   (sq (- (or (pof1-freq word) 0)
-							  (or (pof2-freq word) 0))))
-						 word-list)))))))
+(def euclidean (memoize (fn [freq1 freq2 feature-list]
+			  (sqrt (reduce + (map (fn [word]
+						 (sq (- (or (freq1 word) 0)
+							(or (freq2 word) 0))))
+					       feature-list))))))
 
 (defn best-pairing [pofs corpus-freqs]
    (let [word-list (keys corpus-freqs)]
      (first (sort (fn [[pof-1-1 pof-1-2] [pof-2-1 pof-2-2]]
-		    (compare (euclidean pof-1-1 pof-1-2 word-list)
-			     (euclidean pof-2-1 pof-2-2 word-list)))							 
+		    (compare (euclidean (freq pof-1-1) (freq pof-1-2) word-list)
+			     (euclidean (freq pof-2-1) (freq pof-2-2) word-list)))							 
 		  (combinations pofs 2)))))
 
 ; makes an agglomerative hierarchical cluster of the pofs.
