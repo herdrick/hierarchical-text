@@ -1,7 +1,7 @@
-(ns ordinary (:use [incanter.core :only (abs sq sqrt)]
-		   [incanter.stats :only (mean)]
-		   [clojure.contrib.combinatorics]
-		   [clojure.set]))
+(ns hc (:use [incanter.core :only (abs sq sqrt)]
+	     [incanter.stats :only (mean)]
+	     [clojure.contrib.combinatorics]
+	     [clojure.set]))
 
 (def to-words (fn [file-tree]
 		(cond (coll? file-tree) (apply concat (map to-words (flatten file-tree)))
@@ -29,7 +29,7 @@
 (def freqs (memoize (fn [pof]
 		     (if (instance? java.io.File pof)
 		       (freqs-files pof)
-		       (combine-freqs (freqs (first pof))  ; combine frequencies by taking their unweighted mean.  
+		       (combine-freqs (freqs (first pof))  
 				      (freqs (second pof)))))))
 
 (def euclidean (memoize (fn [freqs1 freqs2 feature-list]
@@ -37,7 +37,7 @@
 						 (sq (- (or (freqs1 word) 0)
 							(or (freqs2 word) 0))))
 					       feature-list))))))
-
+  
 (defn best-pairing [pofs corpus-freqs]
    (let [word-list (keys corpus-freqs)]
      (first (sort (fn [[pof-1-1 pof-1-2] [pof-2-1 pof-2-2]]
@@ -64,5 +64,6 @@
 		 [word (- (or (pof-freqs word) 0) (or (corpus-freqs word) 0))])
 	       (keys corpus-freqs)))))
   
-(def *directory-string* "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/store/five-file-stash/")
+(def *directory-string* "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/store/nine-file-stash/")
 (def *txt-files* (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File *directory-string*) nil false)))
+   

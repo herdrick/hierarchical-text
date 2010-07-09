@@ -1,4 +1,4 @@
-(ns ordinary)
+(ns hc)
 (defn pof->js [top-pof interesting-words-count]
   (let [all-files (flatten top-pof)
 	corpus-freqs (freqs-files all-files)]	
