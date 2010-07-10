@@ -8,8 +8,9 @@
 (def flatten-m (memoize flatten))
 
 (def to-words (memoize (fn [file-tree]
-			 (cond (coll? file-tree) (apply concat (map to-words (flatten file-tree)))
-			       true (re-seq #"[a-z]+" (org.apache.commons.lang.StringUtils/lowerCase (slurp (str file-tree))))))))
+			 (if (coll? file-tree)
+			   (apply concat (map to-words (flatten file-tree)))
+			   (re-seq #"[a-z]+" (org.apache.commons.lang.StringUtils/lowerCase (slurp (str file-tree))))))))
 
 (def make-word-idx (memoize (fn [pofs]
 			      (vec (map first (sort (fn [[k1 v1] [k2 v2]] ;all i need is a consistent sort, order doesn't otherwise matter
