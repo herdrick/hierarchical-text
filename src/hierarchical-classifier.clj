@@ -4,8 +4,9 @@
 	     [clojure.set]))
 
 (def to-words (fn [file-tree]
-		(cond (coll? file-tree) (apply concat (map to-words (flatten file-tree)))
-		      true (re-seq #"[a-z]+" (org.apache.commons.lang.StringUtils/lowerCase (slurp (str file-tree)))))))
+		(if (coll? file-tree)
+		  (apply concat (map to-words (flatten file-tree)))
+		  (re-seq #"[a-z]+" (org.apache.commons.lang.StringUtils/lowerCase (slurp (str file-tree)))))))
 
 (def freqs-files (memoize (fn [pof]
 			   (let [words (to-words pof)
@@ -45,7 +46,7 @@
 			     (euclidean (freqs pof-2-1) (freqs pof-2-2) word-list)))							 
 		  (combinations pofs 2)))))
 
-; makes an agglomerative hierarchical cluster of the pofs.
+; make agglomerative hierarchical cluster of the pofs.
 ; pof = pairing or file.  pofs is a list of them. 
 (defn cluster
   ([pofs] (cluster pofs (freqs-files (flatten pofs))))
