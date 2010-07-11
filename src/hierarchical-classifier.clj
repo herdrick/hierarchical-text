@@ -39,21 +39,20 @@
 							(or (freqs2 word) 0))))
 					       feature-list))))))
   
-(defn best-pairing [pofs corpus-freqs]
-   (let [word-list (keys corpus-freqs)]
-     (first (sort (fn [[pof-1-1 pof-1-2] [pof-2-1 pof-2-2]]
-		    (compare (euclidean (freqs pof-1-1) (freqs pof-1-2) word-list)
-			     (euclidean (freqs pof-2-1) (freqs pof-2-2) word-list)))							 
-		  (combinations pofs 2)))))
+(defn best-pairing [pofs word-list]
+  (first (sort (fn [[pof-1-1 pof-1-2] [pof-2-1 pof-2-2]]
+		 (compare (euclidean (freqs pof-1-1) (freqs pof-1-2) word-list)
+			  (euclidean (freqs pof-2-1) (freqs pof-2-2) word-list)))							 
+	       (combinations pofs 2))))
 
 ; make agglomerative hierarchical cluster of the pofs.
 ; pof = pairing or file.  pofs is a list of them. 
 (defn cluster
-  ([pofs] (cluster pofs (freqs-files (flatten pofs))))
-  ([pofs corpus-freqs] 
+  ([pofs] (cluster pofs (keys (freqs-files (flatten pofs)))))
+  ([pofs word-list] 
      (if (= (count pofs) 1)
        (first pofs)
-       (let [best-pair (best-pairing pofs corpus-freqs)]
+       (let [best-pair (best-pairing pofs word-list)]
 	 (cluster (conj (filter (complement #(some (set [%]) best-pair))
 				pofs)
 			best-pair))))))
@@ -65,6 +64,6 @@
 		 [word (- (or (pof-freqs word) 0) (or (corpus-freqs word) 0))])
 	       (keys corpus-freqs)))))
   
-(def *directory-string* "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/store/nine-file-stash/")
+(def *directory-string* "/Users/herdrick/Dropbox/clojure/hierarchical-classifier/data/store/five-file-stash/")
 (def *txt-files* (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File *directory-string*) nil false)))
    
