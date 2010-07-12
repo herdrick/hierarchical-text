@@ -1,4 +1,4 @@
-(def clustered (cluster "/path/to/documents/"))
+(def clustered (cluster (seq (org.apache.commons.io.FileUtils/listFiles (new java.io.File "/path/to/documents/") nil false))))
 
 To see this tree visualized, make sure you have the visualize/ dir.  Change *protovis-json-file* in protovis.clj to be the *full* path to your visualize/protovis-3.2/flare.js  Then:
 
