@@ -1,0 +1,6 @@
+(def clustered (cluster "/path/to/documents/"))
+
+To see this tree visualized, make sure you have the visualize/ dir.  then change *protovis-json-file* in protovis.clj to be the *full* path to your visualize/protovis-3.2/flare.js  Then:
+
+(def json (.replace (pof->js clustered 3) "/path/to/documents/" ""))  ; 3 is a good number of interesting words to show.  removing the dir path to each file keeps everything much cleaner.
+(write-protovis-file json)
