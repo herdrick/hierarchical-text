@@ -25,7 +25,7 @@
 
 (defn combine-freqs [f1 f2]
   (merge-general (comp mean vector)
-		 (fn [val] (mean [val 0])) f1 f2))  ; i'm just combining freqs taking their (unweighted) mean.  
+		 (fn [val] (mean [val 0])) f1 f2))  ;i'm just combining freqs taking their (unweighted) mean.  
 
 (def freqs (memoize (fn [pof]
 		     (if (instance? java.io.File pof)
@@ -45,8 +45,8 @@
 			  (euclidean (freqs pof-2-1) (freqs pof-2-2) word-list)))							 
 	       (combinations pofs 2))))
 
-; make agglomerative hierarchical cluster of the pofs.
-; pof = pairing or file.  pofs is a list of them. 
+;make agglomerative hierarchical cluster of the pofs.
+;pof = pairing or file.  pofs is a list of them. 
 (defn cluster
   ([pofs] (cluster pofs (keys (freqs-files (flatten pofs)))))
   ([pofs word-list] 
