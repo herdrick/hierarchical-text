@@ -3,13 +3,14 @@
 		  [clojure.contrib.combinatorics :only (combinations)]))
 		 
 (def set-m (memoize set))
+(def sort-m (memoize sort))
 (def flatten-m (memoize flatten))
 (def frequencies-m (memoize frequencies))
 (def count-m (memoize count))
-
+ 
 (def to-words (memoize (fn [file-tree]
 			 (if (coll? file-tree)
-			   (apply concat (map to-words (set-m (flatten-m file-tree))))
+			   (apply concat (map to-words (set-m (sort-m (flatten-m file-tree)))))
 			   (re-seq #"[a-z]+" (org.apache.commons.lang.StringUtils/lowerCase (slurp (str file-tree))))))))
 
 (def word-list (memoize (comp set-m to-words)))
