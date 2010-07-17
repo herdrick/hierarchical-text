@@ -24,18 +24,18 @@
 		       (freq-files pof word)
 		       (mean (vector (freq (first pof) word)  ; combine frequencies by taking their unweighted mean.  
 				     (freq (second pof) word)))))))
-
+ 
 (def euclidean (memoize (fn [pof1 pof2 pofs]
 			  (sqrt (reduce + (map (fn [word]
 						 (sq (- (freq pof1 word)
 							(freq pof2 word))))
 					       (word-list pofs)))))))
 
-(defn best-pairing [pofs]
-  (first (sort (fn [[pof-1-1 pof-1-2] [pof-2-1 pof-2-2]]
-		 (compare (euclidean pof-1-1 pof-1-2 pofs)
-			  (euclidean pof-2-1 pof-2-2 pofs)))							 
-	       (combinations pofs 2))))
+(def best-pairing (memoize (fn [pofs]
+			     (first (sort (fn [[pof-1-1 pof-1-2] [pof-2-1 pof-2-2]]
+					    (compare (euclidean pof-1-1 pof-1-2 pofs)
+						     (euclidean pof-2-1 pof-2-2 pofs)))							 
+					  (combinations pofs 2))))))
 
 ; makes an agglomerative hierarchical cluster of the pofs.
 ; pof = pairing or file.  pofs is a list of them.
