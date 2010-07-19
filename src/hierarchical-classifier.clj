@@ -46,7 +46,7 @@
 	       (combinations pofs 2))))
 
 ;make agglomerative hierarchical cluster of the pofs.
-;pof = pairing or file.  pofs is a tree of them. 
+;pof = pairing or file (i.e. a file tree).  pofs is a list of them. 
 (defn cluster
   ([pofs] (cluster pofs (keys (freqs-files (flatten pofs)))))
   ([pofs word-list] 
