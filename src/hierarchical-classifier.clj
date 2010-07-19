@@ -38,7 +38,7 @@
 					  (combinations pofs 2))))))
 
 ; makes an agglomerative hierarchical cluster of the pofs.
-; pof = pairing or file.  pofs is a tree of them.
+;pof = pairing or file (i.e. a file tree).  pofs is a list of them. 
 (defn cluster [pofs]
   (if (= (count pofs) 1) 
     (first pofs)
