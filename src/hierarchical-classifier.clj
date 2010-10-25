@@ -2,6 +2,7 @@
 		  [incanter.stats :only (mean)]
 		  [clojure.contrib.combinatorics :only (combinations)]))
 		 
+;hello lem
 (def set-m (memoize set))
 (def sort-m (memoize sort))
 (def flatten-m (memoize flatten))
